@@ -1,0 +1,2 @@
+# Ignorer tous les modèles ONNX
+ai-server/traduction/**/*.onnx

@@ -1,0 +1,210 @@
+// Variables
+$primary-color: #6a5acd;
+$secondary-color: #a38cd6;
+$text-color: #333;
+$button-text-color: white;
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  @include flex-center;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  //background-color: #eef2f7;
+  background: url("/assets/blobs.svg") no-repeat center center;
+  background-size: cover;
+  overflow-x: hidden;
+}
+
+.upload-section {
+  @include flex-center;
+  width: 100%;
+  height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.upload-box {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 30px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .icon {
+    @include flex-center;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 10px;
+
+    img {
+      width: 60px;
+      cursor: pointer;
+    }
+  }
+
+  .upload-text {
+    font-weight: bold;
+    margin: 10px 0;
+    color: $text-color;
+    font-size: 16px;
+  }
+
+  .input-link {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    margin-top: 10px;
+    box-sizing: border-box;
+  }
+
+  ion-button {
+  --background: #9893f4; // ✅ Use Ionic CSS variable to set background
+  --color: white;        // ✅ Text color
+  --border-radius: 10px;
+  width: 100%;
+  margin-top: 15px;
+
+  &:disabled {
+    --background: gray;
+  }
+}
+
+}
+
+/* Footer Styles */
+footer {
+  text-align: center;
+  padding: 10px;
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+
+  p {
+    margin: 0;
+    color: #333;
+    font-size: 14px;
+  }
+}
+
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
+/* Responsive */
+@media screen and (max-width: 480px) {
+.container {
+  @include flex-center;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  //background-color: #eef2f7;
+  background: url("/assets/blobs-phone.svg") no-repeat center center;
+  background-size: cover;
+  overflow-x: hidden;
+}
+
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+  }
+
+  .upload-box {
+    width: 90%;
+    padding: 15px;
+    border-radius: 20px;
+
+    .icon {
+      width: 60px;
+      height: 60px;
+
+      img {
+        width: 40px;
+      }
+    }
+
+    .upload-text {
+      font-size: 14px;
+    }
+
+    .input-link {
+      padding: 8px;
+    }
+  }
+}
+
+/* Footer Navigation */
+
+ion-icon {
+  color: $primary-color;
+  font-size: 24px;
+}
+
+.footer-buttons {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+}
+
+.footer-button {
+  --color: #666666;
+  margin: 0;
+  transition: transform 0.2s ease;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.button-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.footer-label {
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: capitalize;
+  transition: color 0.3s ease, font-weight 0.3s ease;
+}
+
+.footer-icon {
+  font-size: 30px;
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+/* Active State */
+.footer-button.active .footer-icon,
+.footer-button.active .footer-label {
+  color: var(--ion-color-primary);
+  font-weight: bold;
+}
+
+.footer-button.active .footer-icon {
+  transform: scale(1.1);
+}
+

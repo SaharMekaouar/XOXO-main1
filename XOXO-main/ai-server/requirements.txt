@@ -1,0 +1,31 @@
+# FastAPI & serveurs
+fastapi
+uvicorn
+
+# Whisper pour la transcription audio
+openai-whisper
+
+# PyTorch cpu
+torch==2.2.2+cpu
+torchaudio==2.2.2+cpu
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# Transformers pour T5 et MarianMT
+transformers==4.40.1
+sentencepiece  # nécessaire pour certains modèles de traduction
+
+# Autres utilitaires
+pydantic
+numpy==1.26.4
+# Manipulation audio
+pydub
+
+#detecter la langue source 
+langdetect
+
+#pour le onnx runtime
+optimum[onnxruntime]
+onnx==1.17.0
+onnxruntime==1.17.3
+onnxruntime-tools==1.7.0
+protobuf==4.25.3

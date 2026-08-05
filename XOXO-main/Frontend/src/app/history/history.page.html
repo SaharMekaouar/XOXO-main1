@@ -1,0 +1,274 @@
+<ion-header>
+    <app-navbar></app-navbar>
+  </ion-header>
+<div class="container">
+  
+  <ion-content class="history-page">
+
+     <div class="search-container">
+      <ion-searchbar
+        [(ngModel)]="searchTerm"
+        (ionInput)="filterClips()"
+        placeholder="Search in your history..."
+        animated
+        debounce="300" style="color: #9893f4;">
+      </ion-searchbar>
+    </div>
+    <!-- Category management section -->
+    <div *ngIf="isAuthenticated" class="categories-section">
+      <ion-chip class="category-chip" (click)="toggleFavoriteFilter()" style="color: #9893f4;">
+        <ion-icon
+    [name]="showOnlyFavorites ? 'heart' : 'heart-outline'"
+    [color]="showOnlyFavorites ? 'danger' : 'medium'"
+    class="ion-margin-end"
+  ></ion-icon>
+  <span>{{ showOnlyFavorites ? 'Only Favorites' : 'All Texts' }}</span>
+      </ion-chip>
+
+
+      <ion-chip class="category-chip" (click)="togglePinnedFilter()" style="color: #9893f4;">
+        <ion-icon
+        [name]="showOnlyPinned ? 'pin' : 'pin-outline'"
+        [color]="showOnlyPinned ? 'secondary' : 'medium'"
+        class="ion-margin-end"
+      ></ion-icon>
+      <span>{{ showOnlyPinned ? 'Only Pinned' : 'All Texts' }}</span>
+      </ion-chip>
+
+      <ion-chip (click)="resetFilters()" [outline]="selectedCategory !== null || showOnlyPinned" style="color: #9893f4;">
+        All
+      </ion-chip>
+
+
+      <ion-chip *ngFor="let category of categories"
+                (click)="filterByCategory(category.id)"
+                [outline]="selectedCategory !== category.id" style="color: #9893f4;">
+        {{ category.name }}
+        <ion-icon name="create-outline" (click)="editingCategory = category; $event.stopPropagation()"></ion-icon>
+        <ion-icon name="trash"  (click)="deleteCategory(category.id); $event.stopPropagation()" style="color: #9893f4;"></ion-icon>
+      </ion-chip>
+
+      <ion-chip (click)="showCategoryModal = true" style="color: #9893f4;">
+        <ion-icon name="add"></ion-icon>
+        New Category
+      </ion-chip>
+    </div>
+
+    <!-- Category edit modal -->
+    <div *ngIf="editingCategory" class="category-edit-modal">
+      <div class="popup-content">
+    <ion-card>
+      <ion-card-header >
+        <ion-card-title>Edit Category</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+       <ion-input [(ngModel)]="editingCategory.name" style="color: #9893f4;"></ion-input>
+      <ion-button (click)="updateCategory(editingCategory)"  style="--background: #9893f4; --color: white;"> Save </ion-button>
+      <ion-button (click)="editingCategory = null" fill="outline"   style="--border-color: #9893f4; --color: #9893f4;"> Cancel  </ion-button>
+    </ion-card-content>
+  </ion-card>
+</div>
+    </div>
+
+    <!-- New category modal (popup) -->
+<div *ngIf="showCategoryModal" class="popup-overlay">
+  <div class="popup-content">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>New Category</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <ion-input [(ngModel)]="newCategoryName" placeholder="Category name"  style="color: #9893f4;"></ion-input>
+       <ion-button (click)="createCategory(); showCategoryModal = false"  style="--background: #9893f4; --color: white;">   Create  </ion-button>
+       <ion-button (click)="showCategoryModal = false" fill="outline" style="--border-color: #9893f4; --color: #9893f4;">  Cancel  </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</div>
+    <!-- ✅ Si l'utilisateur est connecté -->
+    <div *ngIf="isAuthenticated; else loggedOutContent" class="content-container">
+      <!-- ✅ Liste des notes complètes -->
+      <div class="clips-container">
+        <!-- ✅ Aucun texte sauvegardé -->
+        <ion-card *ngIf="noSavedText || filteredClips.length === 0">
+          <ion-card-header>
+            <ion-card-title>No Saved Texts</ion-card-title>
+            <ion-card-subtitle>Start using the APP and save your texts</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+            History where you can store your transcribed, summarized and translated text...
+            Don't hesitate to start using our app.
+          </ion-card-content>
+        </ion-card>
+        <!-- ✅ Liste des notes -->
+        <ion-card *ngFor="let clip of filteredClips">
+          <ion-card-header>
+            <ion-card-title>
+              <ion-input
+                [(ngModel)]="clip.title"
+                (ionChange)="updateTitle(clip.id, clip.title)"
+                placeholder="Modify title">
+              </ion-input>
+            </ion-card-title>
+            <ion-card-subtitle>{{ clip.createdAt | date }}</ion-card-subtitle>
+          </ion-card-header>
+          <ion-card-content>
+
+            <div class="text-container">
+              <!-- Affichage texte -->
+              <div *ngIf="!clip.isExpanded">
+                {{ clip.content | slice:0:100 }}<span *ngIf="clip.content.length > 100">...</span>
+                <div class="see-more" *ngIf="clip.content.length > 100" (click)="clip.isExpanded = true" style="color: #9893f4;">
+                  See More ...
+                </div>
+              </div>
+
+              <!-- Mode édition -->
+              <div *ngIf="clip.isExpanded">
+                <ion-textarea
+                  [(ngModel)]="clip.content"
+                  autoGrow="true"
+                  placeholder="Update Text"
+                  (blur)="updateContentAutoSave(clip.id, clip.content)"
+                  (keydown.enter)="updateContentAutoSave(clip.id, clip.content)">
+                </ion-textarea>
+
+                <div class="see-less" (click)="clip.isExpanded = false" style="color: #9893f4;">
+                  See Less ...
+                </div>
+              </div>
+            </div>
+
+
+          </ion-card-content>
+           <!-- Ajoutez le sélecteur de catégorie ICI -->
+    <ion-item lines="none" class="category-selector">
+      <ion-label>Catégorie</ion-label>
+      <ion-select
+        [(ngModel)]="clip.categoryId"
+        (ionChange)="onCategoryChange(clip)"
+        interface="popover">
+        <ion-select-option value="none">Aucune catégorie</ion-select-option>
+<ion-select-option *ngFor="let category of categories" [value]="category.id">
+  {{ category.name }}
+</ion-select-option>
+      </ion-select>
+    </ion-item>
+    <ion-footer class="ion-padding-horizontal" style="display: flex; align-items: center; justify-content: space-between;">
+      <small>{{ clip.createdAt | date:'medium' }}</small>
+
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <ion-button fill="clear" size="small" (click)="toggleFavorite(clip); $event.stopPropagation()">
+          <ion-icon
+            [name]="clip.isFavorite ? 'heart' : 'heart-outline'"
+            [color]="clip.isFavorite ? 'danger' : 'medium'"
+            style="font-size: 24px;">
+          </ion-icon>
+        </ion-button>
+
+        <ion-button fill="clear" size="small" (click)="togglePin(clip); $event.stopPropagation()">
+          <ion-icon
+            [name]="clip.isPinned ? 'pin' : 'pin'"
+            [color]="clip.isPinned ? 'purple' : 'medium'"
+            style="font-size: 24px;">
+          </ion-icon>
+        </ion-button>
+
+        <!-- Bouton principal "Share" -->
+<!-- Bouton principal "Share" -->
+       <ion-button fill="clear" (click)="openEmailModal(clip.content); $event.stopPropagation()" style="display: flex; align-items: center;">
+  <ion-icon name="share-social-outline" style="font-size: 24px;"></ion-icon>
+
+</ion-button>
+
+<!-- Liste déroulante avec les options URL et Mail -->
+
+
+
+        <ion-button fill="clear" size="small" (click)="selectAction('download', clip); $event.stopPropagation()">
+          <ion-icon name="download-outline" style="font-size: 24px; color: #9893f4;"></ion-icon>
+        </ion-button>
+
+
+        <ion-button fill="clear" size="small" color="danger" (click)="deleteText(clip.id, $event)">
+          <ion-icon name="trash" style="font-size: 24px;"></ion-icon>
+        </ion-button>
+      </div>
+    </ion-footer>
+
+
+        </ion-card>
+      </div>
+    </div>
+
+    <!-- ✅ Si l'utilisateur n'est PAS connecté -->
+    <ng-template #loggedOutContent>
+      <div class="content-container">
+        <!-- ✅ Clip démo -->
+        <div class="clips-container">
+          <ion-card *ngFor="let clip of filteredClips" (click)="toggleClip(clip)">
+            <ion-card-header>
+              <ion-card-title>{{ clip.title }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div
+                [@expandCollapse]="selectedClip?.id === clip.id ? 'expanded' : 'collapsed'"
+                class="animated-content"
+              >
+                {{ clip.content }}
+              </div>
+            </ion-card-content>
+
+            <ion-button fill="clear" color="danger" size="small" (click)="deleteText(clip.id, $event)">
+              <ion-icon name="trash-outline"></ion-icon>
+            </ion-button>
+          </ion-card>
+        </div>
+
+      </div>
+    </ng-template>
+  </ion-content>
+
+ <!-- ✅ Footer -->
+  <footer class="footer desktop-only">
+    <p>© 2025 Recapify Inc. All rights reserved.</p>
+  </footer>
+
+  <ion-footer class ="mobile-only">
+    <ion-toolbar>
+      <ion-buttons class="footer-buttons">
+        <!-- Bouton History -->
+        <ion-button 
+          class="footer-button" 
+          fill="clear"
+          (click)="History()">
+          <div class="button-content">
+            <ion-icon name="document-text-outline"></ion-icon>
+            <ion-label class="footer-label">My content</ion-label>
+          </div>
+        </ion-button>
+        <!-- Bouton Home -->
+        <ion-button 
+          class="footer-button" 
+          fill="clear"
+          (click)="isAuthenticated ? Homeuser() : Home()">
+          <div class="button-content">
+            <ion-icon name="home-outline"></ion-icon>
+            <ion-label class="footer-label">Home</ion-label>
+          </div>
+        </ion-button>
+        <!-- Bouton Help -->
+        <ion-button
+          class="footer-button" 
+          fill="clear"
+          (click)="Contact()">
+          <div class="button-content">
+            <ion-icon name="help-circle-outline"></ion-icon>
+            <ion-label class="footer-label">Help</ion-label>
+          </div>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-footer>
+</div>
+ 

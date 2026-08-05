@@ -1,0 +1,116 @@
+.acceuil-page {
+  --background: #eef2f7;
+  padding: 20px;
+  text-align: center;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 15px;
+  margin: 30px 0;
+
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    font-weight: bold;
+  }
+
+  .log-in {
+    background: transparent;
+    color: #9893f4;
+    border: 2px solid #9893f4;
+    &:hover {
+      background: #9893f4;
+      color: white;
+    }
+  }
+
+  .join-now {
+    background: #9893f4;
+    color: white;
+    &:hover {
+      background: #c8c5ff;
+      color: #9893f4;
+    }
+  }
+}
+
+
+img {
+  // Adjust based on your logo size
+  width: 350px;
+}
+
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 60px 20px;
+}
+
+.hero-text h1 {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.hero-text p {
+  font-size: 1.4rem;
+  color: #555;
+  margin-bottom: 40px;
+}
+
+.hero-image img {
+  width: 100%;
+  max-width: 450px;
+  height: auto;
+}
+
+.features {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 50px;
+  padding: 50px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.second-row {
+  margin-top: 40px; // Adds spacing between rows
+}
+
+.feature {
+  flex: 1 1 300px;
+  max-width: 300px;
+  text-align: center;
+
+  .feature-icon {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    margin-bottom: 15px;
+  }
+}
+
+
+.footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 1rem;
+  color: #555;
+}
+
+@keyframes fadeInPage {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

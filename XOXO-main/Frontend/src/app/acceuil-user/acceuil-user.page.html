@@ -1,0 +1,63 @@
+<div class="container">
+  <!-- ✅ Correction de ion-header => Utilisation de header pour éviter les conflits -->
+  <app-navbar></app-navbar>
+  <main class="upload-section">
+
+    <div class="upload-box">
+      <div class="icon-container">
+        <div class="icon" (click)="triggerFileInput()">
+          <img src="assets/icon/icon.png" />
+        </div>
+        <input type="file" #fileInput accept="audio/*, video/*" (change)="onFileSelected($event)" hidden>
+        <p *ngIf="uploadedFileName">{{ uploadedFileName }}</p>
+      </div>
+
+      <p class="upload-text">CLICK TO ADD YOUR CLIP</p>
+      <p>OR</p>
+      <input type="text" id="urlInput" placeholder="INSERT LINK TO THE MEDIA" class="input-link" [(ngModel)]="mediaUrl" (ngModelChange)="uploadedFile = null">
+
+      <ion-button [disabled]="!canConvert() " (click)="convertToText()">CONVERT TO TEXT</ion-button>
+    </div>
+  </main>
+
+  <footer class="desktop-only">
+    <p>© 2025 Recapify Inc. All rights reserved.</p>
+  </footer>
+
+  <ion-footer class ="mobile-only">
+    <ion-toolbar>
+      <ion-buttons class="footer-buttons">
+        <!-- Bouton History -->
+        <ion-button 
+          class="footer-button" 
+          fill="clear"
+          (click)="History()">
+          <div class="button-content">
+            <ion-icon name="document-text-outline"></ion-icon>
+            <ion-label class="footer-label">My content</ion-label>
+          </div>
+        </ion-button>
+        <!-- Bouton Home -->
+        <ion-button 
+          class="footer-button" 
+          fill="clear"
+          (click)="Homeuser()">
+          <div class="button-content">
+            <ion-icon name="home-outline"></ion-icon>
+            <ion-label class="footer-label">Home</ion-label>
+          </div>
+        </ion-button>
+        <!-- Bouton Help -->
+        <ion-button
+          class="footer-button" 
+          fill="clear"
+          (click)="Contact()">
+          <div class="button-content">
+            <ion-icon name="help-circle-outline"></ion-icon>
+            <ion-label class="footer-label">Help</ion-label>
+          </div>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-footer>
+</div>
