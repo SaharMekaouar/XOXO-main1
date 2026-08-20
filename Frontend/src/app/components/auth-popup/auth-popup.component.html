@@ -1,0 +1,14 @@
+<div class="popup">
+  <div class="popup-inner" [class.flipped]="isFlipped">
+    <div class="popup-front">
+      <h3>Access Restricted</h3>
+      <p>You must be logged in to access this feature.</p>
+      <button (click)="flipCard()">View Options</button>
+    </div>
+    <div class="popup-back">
+      <button (click)="redirectToLogin()">Log In</button>
+      <button (click)="redirectToSignup()">Sign Up</button>
+      <button (click)="closePopup()">Cancel</button>
+    </div>
+  </div>
+</div>

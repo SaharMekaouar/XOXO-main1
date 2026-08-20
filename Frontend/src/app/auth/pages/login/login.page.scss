@@ -1,0 +1,152 @@
+/* Styling for ion-content */
+ion-content {
+  --background: none;
+  background: url("/assets/blobs.svg") no-repeat center center;
+  background-size: cover;
+  display: flex;
+  flex-direction: column; 
+  justify-content: center; /* Center the content horizontally */
+  align-items: center; /* Center the content vertically */
+  height: 100vh;
+  position: relative;
+  padding: 15px; /* Padding to keep content from touching the edges */
+  box-sizing: border-box;
+}
+
+/* Container for the login form */
+.login-container {
+  width: 100%; /* Full width of its parent container */
+  max-width: 450px;
+  height: 465px;
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 30px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-height: 80vh;
+  overflow: hidden;
+  margin: auto; /* Ensure the container is centered */
+}
+@media (min-width: 769px) {
+  .login-container {
+    margin-left: 10%; /* Déplace vers la gauche */
+    margin-top: 70px;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-container {
+    padding: 1rem;
+    max-width: 90%;
+    max-height: 90vh;
+    margin-top: 35px;
+    max-height: 420px;         // ✅ Reduce visible height
+    
+    ion-button {
+      font-size: 0.9rem;
+      padding: 10px;
+    }
+  
+    ion-input {
+      font-size: 1rem;
+    }
+  }
+}
+
+/* Wrapper for the form */
+.form-wrapper {
+  width: 100%; /* Ensures the form takes up the full container width */
+  display: flex;
+  flex-direction: column; /* Stack form elements vertically */
+  justify-content: flex-start;
+  gap: 1rem; /* Adds spacing between form fields */
+}
+
+
+/* Prevent image from taking up too much space */
+.image-container {
+  width: 50%;
+  height: 100vh;
+  background: url("/assets/background/3094352R.png") no-repeat right center;
+  background-size: contain;
+  flex-shrink: 0; /* Prevent the image from shrinking */
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.1);
+}
+
+.back-icon {
+  width: 30px;
+  height: 30px;
+  filter: blur();
+}
+
+/* Button styling */
+ion-button {
+  --background: #9893f4;
+  --border-radius: 10px;
+  --color: white;
+  width: 100%;
+  font-size: 1rem;
+  padding: 12px;
+  transition: all 0.3s ease-in-out;
+
+  &:hover {
+    --background: #9370db;
+    transform: translateY(-2px);
+  }
+
+  &[disabled] {
+    opacity: 0.6;
+    pointer-events: none;
+    transform: none;
+  }
+
+}
+
+a {
+  color: #6a5acd;
+  font-weight: bold;
+  text-decoration: none;
+  transition: 0.3s;
+
+  &:hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+ion-item {
+  width: 100%;
+}
+
+ion-input {
+  width: 100%;
+  font-size: 1rem;
+}
+.background-image {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 45%; /* Réduire la taille sur les grands écrans */
+  margin-right: 3%;
+  height: auto;
+  opacity: 0.8;
+  pointer-events: none; /* Empêche l’image d'interférer avec les clics */
+  z-index: -1;
+  mix-blend-mode: multiply;
+}
+
+/* Ajustement pour les écrans de petite taille (mobile) */
+@media (max-width: 768px) {
+  .background-image {
+    width: 90%;
+    opacity: 0.8;
+  }
+
+  ion-content {
+    background: url("/assets/blobs-phone.svg") no-repeat center center;
+    background-size: cover;
+  }
+}

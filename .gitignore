@@ -1,0 +1,29 @@
+# Environnements virtuels Python
+ai-server/venv/
+**/venv/
+**/__pycache__/
+*.pyc
+
+# Node.js
+node_modules/
+dist/
+
+# Fichiers d'environnement (secrets, ne jamais partager)
+.env
+.env.local
+
+# Fichiers temporaires générés par l'app
+ai-server/temp_uploaded*.mp3
+backend/uploads/*
+
+# Modèles IA (trop volumineux pour Git)
+ai-server/traduction/**/*.onnx
+ai-server/traduction/**/models/
+
+# Éditeurs
+.vscode/
+*.log
+
+# Système
+.DS_Store
+Thumbs.db
