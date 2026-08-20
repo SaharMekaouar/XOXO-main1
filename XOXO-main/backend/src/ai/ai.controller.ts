@@ -62,7 +62,7 @@ export class AIController {
       const decodedUrl = decodeURIComponent(body.url);
       const filePath = await this.aiService.processUrl(decodedUrl);
       this.logger.log(`File downloaded: ${filePath}`);
-      const transcription = await this.aiService.sendToWhisper(filePath);
+      const transcription = await this.aiService.sendToFasterWhisper(filePath);
       this.logger.log('Transcription successful');
       return { text: transcription };
     } catch (error) {

@@ -3,8 +3,7 @@ fastapi
 uvicorn
 
 # Whisper pour la transcription audio
-openai-whisper
-
+faster-whisper
 # PyTorch cpu
 torch==2.2.2+cpu
 torchaudio==2.2.2+cpu
@@ -12,7 +11,7 @@ torchaudio==2.2.2+cpu
 
 # Transformers pour T5 et MarianMT
 transformers==4.40.1
-sentencepiece  # nécessaire pour certains modèles de traduction
+sentencepiece  # nécessaire pour certains modèles de traductionai-server
 
 # Autres utilitaires
 pydantic
