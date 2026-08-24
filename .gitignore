@@ -26,4 +26,21 @@ ai-server/traduction/**/models/
 
 # Système
 .DS_Store
-Thumbs.db
+Thumbs.dbXOXO-main/Frontend/.angular/
+XOXO-main/Frontend/node_modules/
+XOXO-main-backup/
+XOXO-main/Frontend/.angular/
+XOXO-main/Frontend/node_modules/
+XOXO-main/backend/dist/
+XOXO-main/backend/.env
+XOXO-main/ai-server/**/.cache/
+XOXO-main-backup/
+
+# XOXO-main generated/dependency files
+XOXO-main/**/node_modules/
+XOXO-main/**/dist/
+XOXO-main/**/.angular/
+XOXO-main/**/.env
+XOXO-main/**/.cache/
+XOXO-main/**/__pycache__/
+XOXO-main/**/*.pyc
