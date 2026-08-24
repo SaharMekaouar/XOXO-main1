@@ -103,12 +103,13 @@
         <!-- ✅ Liste des notes -->
         <ion-card *ngFor="let clip of filteredClips">
           <ion-card-header>
-            <ion-card-title>
+                        <ion-card-title class="editable-title-wrapper">
               <ion-input
                 [(ngModel)]="clip.title"
                 (ionChange)="updateTitle(clip.id, clip.title)"
                 placeholder="Modify title">
               </ion-input>
+              <ion-icon name="create-outline" class="edit-icon"></ion-icon>
             </ion-card-title>
             <ion-card-subtitle>{{ clip.createdAt | date }}</ion-card-subtitle>
           </ion-card-header>

@@ -1,3 +1,5 @@
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -20,7 +22,14 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { MailModule } from './mail/mail.module';
 import { TranslationModule } from './translate/translate.module';
 @Module({
-  imports: [PrismaModule,ConfigModule.forRoot({isGlobal: true,}),MailerModule.forRoot({
+  imports: [PrismaModule,
+    ThrottlerModule.forRoot([
+    {
+      ttl: 60000,
+      limit: 20,
+    },
+  ]),
+  ConfigModule.forRoot({isGlobal: true,}),MailerModule.forRoot({
     transport: {
       host: 'smtp.gmail.com',
       port: 587,
@@ -44,7 +53,10 @@ import { TranslationModule } from './translate/translate.module';
     CategoryModule,
   TranslationModule] ,
   controllers: [AppController, AuthController,SummarizeController],
-  providers: [AppService,PrismaService,SummarizeService],
+  providers: [AppService,PrismaService,SummarizeService, {
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard,
+  }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

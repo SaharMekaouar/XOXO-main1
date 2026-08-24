@@ -5,10 +5,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { NavController } from '@ionic/angular';
+import { NotificationService } from '../../../shared/notification.service';
+
 @Component({
   selector: 'app-login',
   templateUrl: './login.page.html',
-  standalone: true, 
+  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -20,53 +22,49 @@ export class LoginPage {
   email = '';
   password = '';
 
-  rememberMe = false; 
-  errorMessage = '';
-  isLoading = false; 
+  rememberMe = false;
+  isLoading = false;
   navCtrl: any;
 
-  constructor(private authService: AuthService, private router: Router) {}
-  
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private notification: NotificationService
+  ) {}
+
   goHome() {
-    this.navCtrl.navigateRoot('/home'); 
-  }
-  onLogin() {
-   
-    const mockApiResponse = {
-      token: 'fake-jwt-token',
-      user: { id: 1, name: 'John Doe', email: this.email }
-    };
-
-   
-    this.authService.setToken(mockApiResponse.token);
-    this.authService.setUser(mockApiResponse.user);
-
-    console.log('User logged in:', mockApiResponse.user);
-    //console.log('LocalStorage user:', localStorage.getItem('user')); 
-
-   
-    this.router.navigate(['/home']);
+    this.navCtrl.navigateRoot('/home');
   }
 
-
-
-    login() {
-      this.authService.login(this.email, this.password).subscribe({
-        next: (response) => {
-          console.log('✅ Login successful:', response);
-          localStorage.setItem('authToken', response.token);
-          localStorage.setItem('name', response.username);
-          localStorage.setItem('userId', response.userId);
-
-          this.router.navigate(['/acceuil-user']);
-        },
-        error: (error) => {
-          console.error('🚨 Login failed:', error);
-        }
-      });
+  login() {
+    if (!this.email || !this.password) {
+      this.notification.error('Veuillez remplir tous les champs.');
+      return;
     }
 
+    this.isLoading = true;
 
+    this.authService.login(this.email, this.password).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        localStorage.setItem('authToken', response.token);
+        localStorage.setItem('name', response.username);
+        localStorage.setItem('userId', response.userId);
+
+        this.notification.success('Connexion réussie !');
+        this.router.navigate(['/acceuil-user']);
+      },
+            error: (error) => {
+        this.isLoading = false;
+        console.error('🚨 Login failed:', error);
+        if (error.status === 429) {
+          this.notification.error('Trop de tentatives. Veuillez patienter une minute avant de réessayer.');
+        } else {
+          this.notification.error('Email ou mot de passe incorrect.');
+        }
+      }
+    });
+  }
 
   forgotPassword() {
     this.router.navigate(['/forgot-password']);
@@ -75,10 +73,9 @@ export class LoginPage {
     this.router.navigate(['/signup']);
   }
   goBack() {
-    this.router.navigate(['/acceuil']); 
+    this.router.navigate(['/acceuil']);
   }
   Home() {
     this.router.navigate(['/acceuil']);
   }
-
 }

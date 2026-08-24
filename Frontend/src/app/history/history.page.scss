@@ -191,9 +191,15 @@ ion-card {
     padding: 16px;
     color: white;
 
-    ion-card-title {
+        ion-card-title {
       font-size: 1.1rem;
       font-weight: 600;
+
+      &.editable-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
       ion-input {
         --padding-start: 8px;
@@ -202,6 +208,13 @@ ion-card {
         font-weight: 600;
         --placeholder-color: rgba(255, 255, 255, 0.7);
         --placeholder-opacity: 1;
+        flex: 1;
+      }
+
+      .edit-icon {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        flex-shrink: 0;
       }
     }
 

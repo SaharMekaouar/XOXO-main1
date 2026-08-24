@@ -17,6 +17,7 @@ import {
   flagOutline,
   chevronUpOutline,
   chevronDownOutline,
+  checkmarkCircleOutline, alertCircleOutline, informationCircleOutline, closeOutline,
 } from 'ionicons/icons';
 
 addIcons({
@@ -27,7 +28,8 @@ addIcons({
   menuOutline, languageOutline, logoUsd, logoEuro,
   globeOutline, earthOutline, documentOutline,
   expandOutline, contractOutline, ellipsisHorizontalOutline,
-  createOutline, saveOutline
+  createOutline, saveOutline,
+  checkmarkCircleOutline, alertCircleOutline, informationCircleOutline, closeOutline
 });
 const storageProvider = {
   provide: 'ionic-storage',
