@@ -1,217 +1,121 @@
-"""#Sans onnx:
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-import torch
-import gc
-import time
+"""Faithful, multilingual summaries for Whisper transcriptions.
 
-# Charger tokenizer et modèle PyTorch
-tokenizer = AutoTokenizer.from_pretrained("google/long-t5-tglobal-base")
-model = AutoModelForSeq2SeqLM.from_pretrained("google/long-t5-tglobal-base")
-
-# Forcer CPU pour le modèle
-# Si CUDA est disponible, utiliser le GPU// 16/05/2025
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = model.to(device)
-model.eval()
-
-# Paramètres pour différents types de résumés
-
-SUMMARY_TYPES = {
-    "basic":  {"min": 30, "max": 128, "beams": 2, "penalty": 1.0, "sample": False},
- 
-    "advanced":  {"min": 160, "max": 512, "beams": 4, "penalty": 1.5, "sample": False}
-}
-
-def preprocess_text(text):
-    prefixes = [
-        "Summarize: ",
-        "Summarize this for me: ",
-        "Provide a summary of the following: ",
-        "Generate a concise summary: "
-    ]
-    if len(text) < 1000:
-        prefix = prefixes[0]
-    elif len(text) < 3000:
-        prefix = prefixes[1]
-    elif len(text) < 6000:
-        prefix = prefixes[2]
-    else:
-        prefix = prefixes[3]
-    return prefix + text
-
-def summary(text: str, summary_type: str = "basic", max_input_len=2048) -> dict:
-    summary_type = summary_type.lower()
-    if summary_type not in SUMMARY_TYPES:
-        raise ValueError("Type de résumé invalide. Choisir  basic ou advanced.")
-
-    lengths = SUMMARY_TYPES[summary_type]
-    min_output_len = lengths["min"]
-    max_output_len = lengths["max"]
-    beam_count = lengths["beams"]
-    length_penalty = lengths["penalty"]
-    do_sample = lengths["sample"]
-
-    processed_text = preprocess_text(text)
-
-    if len(text) < 1000:
-        max_input_len = min(max_input_len, 1024)
-
-    inputs = tokenizer(
-        processed_text,
-        return_tensors="pt",
-        max_length=max_input_len,
-        truncation=True
-    ).to(device)
-
-    start_time = time.time()
-    with torch.no_grad():
-        outputs = model.generate(
-            input_ids=inputs["input_ids"],
-            attention_mask=inputs["attention_mask"],
-            max_length=max_output_len,
-            min_length=min_output_len,
-            num_beams=beam_count,
-            length_penalty=length_penalty,
-            no_repeat_ngram_size=3,
-            early_stopping=True,
-            temperature=0.8 if do_sample else 1.0,
-            top_p=0.95 if do_sample else 1.0,
-            top_k=50 if do_sample else 0,
-            do_sample=do_sample,
-            use_cache=True
-        )
-    end_time = time.time()
-    processing_time = end_time - start_time
-    generated_summary = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-    # Nettoyage
-    del inputs, outputs
-    gc.collect()
-    if device.type == "cuda":
-        torch.cuda.empty_cache()
-
-    return {
-        "summary": generated_summary,
-        "processing_time": processing_time
-    }
-
-def get_summary(text: str, summary_type: str = "basic", max_input_len=2048) -> dict:
-    try:
-        result = summary(text, summary_type, max_input_len)
-        return {
-            "summary": result["summary"],
-            "length": len(result["summary"].split()),
-            "summary_type": summary_type,
-            "processing_time": result["processing_time"]
-        }
-    except Exception as e:
-        raise ValueError(f"Erreur lors du résumé: {str(e)}")
+The app receives spoken content in several languages, including dialects.  A
+news-trained generative model could invent details or omit the end of a long
+transcription.  This extractive summarizer selects informative source sentences
+instead: every word in a result comes from the supplied transcription.
 """
-#Selon la taille de l'input, on va choisir un prefixe différent
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-import torch
-import gc
+
+import re
 import time
+from collections import Counter
+from typing import List, Sequence
 
-# Charger tokenizer et modèle
-tokenizer = AutoTokenizer.from_pretrained("google/long-t5-tglobal-base")
-model = AutoModelForSeq2SeqLM.from_pretrained("google/long-t5-tglobal-base")
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = model.to(device)
-model.eval()
-
-# Paramètres pour différents types de résumés (sans min/max fixes)
 SUMMARY_TYPES = {
-    "basic":    {"beams": 2, "penalty": 1.0, "sample": False},
-    "advanced": {"beams": 4, "penalty": 1.5, "sample": False}
+    "basic": {"ratio": 0.18, "min_sentences": 1, "max_sentences": 5},
+    "advanced": {"ratio": 0.42, "min_sentences": 2, "max_sentences": 14},
 }
 
-def preprocess_text(text):
-    prefixes = [
-        "Summarize: ",
-        "Summarize this for me: ",
-        "Provide a summary of the following: ",
-        "Generate a concise summary: "
-    ]
-    if len(text) < 1000:
-        prefix = prefixes[0]
-    elif len(text) < 3000:
-        prefix = prefixes[1]
-    elif len(text) < 6000:
-        prefix = prefixes[2]
-    else:
-        prefix = prefixes[3]
-    return prefix + text
+WORD_RE = re.compile(r"[^\W_]+", flags=re.UNICODE)
+SENTENCE_BOUNDARY_RE = re.compile(r"(?<=[.!?؟])\s+|\n+")
 
-def summary(text: str, summary_type: str = "basic", max_input_len=2048) -> dict:
+
+def _words(text: str) -> List[str]:
+    return [word.lower() for word in WORD_RE.findall(text)]
+
+
+def _normalise_transcript(text: str) -> str:
+    """Clean spacing and remove immediately repeated Whisper sentences."""
+    text = re.sub(r"[ \t]+", " ", text or "")
+    text = re.sub(r" *\n *", "\n", text).strip()
+    unique: List[str] = []
+    previous = ""
+    for sentence in SENTENCE_BOUNDARY_RE.split(text):
+        sentence = sentence.strip()
+        key = "".join(_words(sentence))
+        if sentence and key and key != previous:
+            unique.append(sentence)
+            previous = key
+    return " ".join(unique)
+
+
+def _sentences(text: str) -> List[str]:
+    """Split sentences, including a safe fallback for unpunctuated recordings."""
+    sentences = [part.strip() for part in SENTENCE_BOUNDARY_RE.split(text) if part.strip()]
+    if len(sentences) != 1 or len(_words(text)) <= 90:
+        return sentences
+    clauses = [part.strip() for part in re.split(r"(?<=[,;:،؛])\s+", text) if part.strip()]
+    if len(clauses) > 1:
+        return clauses
+    words = text.split()
+    return [" ".join(words[index:index + 55]) for index in range(0, len(words), 55)]
+
+
+def _sentence_score(tokens: Sequence[str], frequencies: Counter, index: int, total: int) -> float:
+    if not tokens:
+        return 0.0
+    lexical_score = sum(frequencies[token] for token in set(tokens)) / (len(tokens) ** 0.5)
+    position_bonus = 0.20 if index == 0 or index == total - 1 else 0.0
+    return lexical_score + position_bonus
+
+
+def _select_sentences(sentences: Sequence[str], summary_type: str) -> List[str]:
+    config = SUMMARY_TYPES[summary_type]
+    token_lists = [_words(sentence) for sentence in sentences]
+    total_words = sum(len(tokens) for tokens in token_lists)
+    target_words = min(total_words, max(1, round(total_words * config["ratio"])))
+    frequencies = Counter(token for tokens in token_lists for token in tokens if len(token) > 1)
+    scores = [
+        _sentence_score(tokens, frequencies, index, len(sentences))
+        for index, tokens in enumerate(token_lists)
+    ]
+
+    chosen: List[int] = []
+    chosen_words = 0
+    remaining = set(range(len(sentences)))
+    while remaining and len(chosen) < config["max_sentences"]:
+        def relevance(index: int) -> float:
+            candidate = set(token_lists[index])
+            overlap = max(
+                (len(candidate & set(token_lists[selected])) /
+                 max(1, len(candidate | set(token_lists[selected])))
+                 for selected in chosen),
+                default=0.0,
+            )
+            return scores[index] * (1 - 0.55 * overlap)
+
+        best = max(remaining, key=relevance)
+        if chosen and chosen_words >= target_words and len(chosen) >= config["min_sentences"]:
+            break
+        chosen.append(best)
+        chosen_words += len(token_lists[best])
+        remaining.remove(best)
+
+    return [sentences[index] for index in sorted(chosen)]
+
+
+def summary(text: str, summary_type: str = "basic", max_input_len: int = 2048) -> dict:
+    """Summarise all supplied text without hallucinating or truncating it."""
+    del max_input_len  # Kept only for backward-compatible API requests.
     summary_type = summary_type.lower()
     if summary_type not in SUMMARY_TYPES:
         raise ValueError("Type de résumé invalide. Choisir 'basic' ou 'advanced'.")
 
-    config = SUMMARY_TYPES[summary_type]
-    beam_count = config["beams"]
-    length_penalty = config["penalty"]
-    do_sample = config["sample"]
+    cleaned = _normalise_transcript(text)
+    if not cleaned:
+        raise ValueError("Le texte à résumer est vide.")
 
-    processed_text = preprocess_text(text)
+    started_at = time.time()
+    generated_summary = " ".join(_select_sentences(_sentences(cleaned), summary_type)).strip()
+    return {"summary": generated_summary, "processing_time": time.time() - started_at}
 
-    if len(text) < 1000:
-        max_input_len = min(max_input_len, 1024)
 
-    tokenized_input = tokenizer(processed_text, return_tensors="pt", max_length=max_input_len, truncation=True)
-    input_len = len(tokenized_input["input_ids"][0])
-
-    # Calcul dynamique des longueurs de résumé
-    if summary_type == "basic":
-        min_output_len = max(20, int(0.05 * input_len))  # 5%
-        max_output_len = max(40, int(0.15 * input_len))  # 15%
-    else:  # advanced
-        min_output_len = max(60, int(0.2 * input_len))   # 20%
-        max_output_len = max(120, int(0.4 * input_len))  # 40%
-
-    tokenized_input = tokenized_input.to(device)
-
-    start_time = time.time()
-    with torch.no_grad():
-        outputs = model.generate(
-            input_ids=tokenized_input["input_ids"],
-            attention_mask=tokenized_input["attention_mask"],
-            max_length=max_output_len,
-            min_length=min_output_len,
-            num_beams=beam_count,
-            length_penalty=length_penalty,
-            no_repeat_ngram_size=3,
-            early_stopping=True,
-            temperature=0.8 if do_sample else 1.0,
-            top_p=0.95 if do_sample else 1.0,
-            top_k=50 if do_sample else 0,
-            do_sample=do_sample,
-            use_cache=True
-        )
-    end_time = time.time()
-    processing_time = end_time - start_time
-    generated_summary = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-    # Nettoyage mémoire
-    del tokenized_input, outputs
-    gc.collect()
-    if device.type == "cuda":
-        torch.cuda.empty_cache()
-
+def get_summary(text: str, summary_type: str = "basic", max_input_len: int = 2048) -> dict:
+    result = summary(text, summary_type, max_input_len)
     return {
-        "summary": generated_summary,
-        "processing_time": processing_time
+        "summary": result["summary"],
+        "length": len(_words(result["summary"])),
+        "summary_type": summary_type.lower(),
+        "processing_time": result["processing_time"],
     }
-
-def get_summary(text: str, summary_type: str = "basic", max_input_len=2048) -> dict:
-    try:
-        result = summary(text, summary_type, max_input_len)
-        return {
-            "summary": result["summary"],
-            "length": len(result["summary"].split()),
-            "summary_type": summary_type,
-            "processing_time": result["processing_time"]
-        }
-    except Exception as e:
-        raise ValueError(f"Erreur lors du résumé: {str(e)}")

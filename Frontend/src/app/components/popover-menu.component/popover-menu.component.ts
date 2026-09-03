@@ -115,11 +115,10 @@ export class PopoverMenuComponent {
     this.isLoading = true;
     this.loadingMessage = 'Translating...';
     this.presentLoading1().then((loading) => {
-      this.http.post<any>('http://localhost:8001/translate/', {
+      this.http.post<any>('http://localhost:3000/translate', {
         text: this.originalText,
-
-        src_lang: this.detectedLanguage, 
-        tgt_lang: targetLang
+        srcLang: 'auto',
+        tgtLang: targetLang
       }).subscribe({
         next: (response) => {
           console.log('✅ Translation received:', response);

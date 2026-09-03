@@ -5,14 +5,29 @@ import { franc } from 'franc-min';
 @Injectable()
 export class TranslationService {
 
-  async detectLanguage(text: string): Promise<string> {
-    const detectedLang = franc(text);
+  private readonly supportedLanguageCodes: Record<string, string> = {
+    eng: 'en',
+    fra: 'fr',
+    fre: 'fr',
+    spa: 'es',
+    deu: 'de',
+    ger: 'de',
+    ita: 'it',
+    ara: 'ar',
+    arb: 'ar',
+  };
 
-    if (detectedLang === 'und') {
-      throw new Error('Unable to detect language');
+  async detectLanguage(text: string): Promise<string> {
+    const detectedLang = franc(text, { minLength: 3 });
+
+    const language = this.supportedLanguageCodes[detectedLang];
+    if (!language) {
+      throw new InternalServerErrorException(
+        'Unable to detect a supported source language',
+      );
     }
 
-    return detectedLang;
+    return language;
   }
 
 
@@ -31,7 +46,11 @@ export class TranslationService {
 
       console.log('Sending translation request:', payload); 
 
-      const response = await axios.post('http://localhost:8001/translate', payload);
+      const response = await axios.post('http://localhost:8001/translate', payload, {
+        // The first use of a language pair may download/export its ONNX model.
+        // It remains cached afterwards, so later translations are much faster.
+        timeout: 600000,
+      });
 
       console.log('Translation microservice response:', response.data);
 

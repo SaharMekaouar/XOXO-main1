@@ -18,11 +18,22 @@ export class TranslationController {
     }
 
   
-      let detectedSrcLang = srcLang.toLowerCase() === 'auto' ? await this.translationService.detectLanguage(text) : srcLang.toLowerCase();
+      const detectedSrcLang = srcLang.toLowerCase() === 'auto'
+        ? await this.translationService.detectLanguage(text)
+        : srcLang.toLowerCase();
+      const targetLanguage = tgtLang.toLowerCase();
           
     
       try {
         let translatedText = text;
+
+        if (detectedSrcLang === targetLanguage) {
+          return {
+            translation: text,
+            detectedSourceLang: detectedSrcLang,
+            targetLang: targetLanguage,
+          };
+        }
 
      
         if (detectedSrcLang !== 'en') {
@@ -30,14 +41,14 @@ export class TranslationController {
         }
 
    
-        if (tgtLang.toLowerCase() !== 'en') {
-          translatedText = await this.translationService.translate(translatedText, 'en', tgtLang.toLowerCase());
+        if (targetLanguage !== 'en') {
+          translatedText = await this.translationService.translate(translatedText, 'en', targetLanguage);
         }
 
         return {
           translation: translatedText,
           detectedSourceLang: detectedSrcLang,
-          targetLang: tgtLang.toLowerCase(),
+          targetLang: targetLanguage,
         };
       } catch (error) {
         console.error('Error while translating text:', error.response?.data || error.message);

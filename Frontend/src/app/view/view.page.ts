@@ -477,8 +477,11 @@ async translateText(text: string, targetLang: string) {
 
   this.presentLoading1().then((loading) => {
     this.http.post<any>('http://localhost:3000/translate', {
-      text: text, // Utiliser le texte passé en paramètre  // new
-      srcLang: this.sourceLanguage || this.detectedLanguage,
+      text: text,
+      // Always detect from the original transcription. `detectedLanguage` was
+      // never reliably initialised, which made French/Arabic text be sent as
+      // English and produced incorrect or failed translations.
+      srcLang: 'auto',
       tgtLang: targetLang
     }).subscribe({
       next: (response) => {

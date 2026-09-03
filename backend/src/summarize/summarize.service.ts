@@ -3,9 +3,24 @@ import axios from 'axios';
 
 @Injectable()
 export class SummarizeService {
-  async summarizeText(text: string): Promise<string> {
+  private readonly summarizerUrl =
+    process.env.SUMMARIZER_URL ?? 'http://localhost:8001/summarize/';
+
+  async summarizeText(
+    text: string,
+    summaryType: 'basic' | 'advanced' = 'basic',
+    maxInputLen = 2048,
+  ): Promise<string> {
     try {
-      const response = await axios.post('https://ff3a-154-111-224-232.ngrok-free.app/summarize/', { text });
+      const response = await axios.post(
+        this.summarizerUrl,
+        {
+          text,
+          summary_type: summaryType,
+          max_input_len: maxInputLen,
+        },
+        { timeout: 180000 },
+      );
       if (response.data && response.data.summary) {
         return response.data.summary;
       }

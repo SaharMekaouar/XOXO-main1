@@ -55,7 +55,7 @@ export class AIService {
     const outputPath = join(this.TEMP_DIR, `audio_${Date.now()}.mp3`);
     try {
       this.logger.log(`Downloading audio from URL: ${url}`);    
-      await execPromise(`yt-dlp -f bestaudio --extract-audio --audio-format mp3 --ffmpeg-location "C:\\Users\\pc\\AppData\\Local\\Programs\\Python\\Python311\\Lib\\site-packages\\imageio_ffmpeg\\binaries\\ffmpeg-win-x86_64-v7.1.exe" -o "${outputPath}" "${url}"`, {
+      await execPromise(`yt-dlp -f bestaudio --extract-audio --audio-format mp3 --ffmpeg-location "C:\\ffmpeg\\bin" -o "${outputPath}" "${url}"`, {
         timeout: 120000
       });
       if (!existsSync(outputPath)) {
