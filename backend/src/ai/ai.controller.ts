@@ -40,7 +40,7 @@ export class AIController {
     }
     try {
       this.logger.log(`Processing file: ${file.originalname}`);
-      const transcription = await this.aiService.transcribeAudio(file.path);
+      const transcription = await this.aiService.transcribeAudio(file.path, body.language);
       this.logger.log('Transcription successful');
       this.cleanupFile(file.path);
       return { text: transcription };
@@ -62,7 +62,7 @@ export class AIController {
       const decodedUrl = decodeURIComponent(body.url);
       const filePath = await this.aiService.processUrl(decodedUrl);
       this.logger.log(`File downloaded: ${filePath}`);
-      const transcription = await this.aiService.sendToWhisper(filePath);
+      const transcription = await this.aiService.sendToWhisper(filePath, body.language);
       this.logger.log('Transcription successful');
       return { text: transcription };
     } catch (error) {

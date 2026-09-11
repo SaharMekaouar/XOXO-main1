@@ -9,4 +9,8 @@ export class UploadAudioDto {
   @IsUrl() 
   @IsString()
   url: string;
+
+  @IsOptional()
+  @IsString()
+  language?: string;
 }

@@ -16,13 +16,14 @@ SUPPORTED_AUDIO_FORMATS = [
     ".aac",
     ".flac",
     ".ogg",
+    ".webm",
     ".m4a",
     ".mp4",
     ".mp3"
 ]
 
 
-def convert_audio(input_file_path: str, output_format: str = "mp3") -> str:
+def convert_audio(input_file_path: str, output_format: str = "wav") -> str:
     try:
         # Vérifier que le fichier existe
         if not os.path.exists(input_file_path):
@@ -48,10 +49,14 @@ def convert_audio(input_file_path: str, output_format: str = "mp3") -> str:
         base, _ = os.path.splitext(input_file_path)
         output_file_path = f"{base}_converted.{output_format}"
 
-        # Exporter en MP3
+        # Whisper works best with a mono 16 kHz PCM track.  Keeping it as WAV
+        # avoids a second lossy MP3 compression that can damage French liaison
+        # and Arabic consonants before transcription.
+        audio = audio.set_frame_rate(16000).set_channels(1)
         audio.export(
             output_file_path,
-            format=output_format
+            format=output_format,
+            parameters=["-ac", "1", "-ar", "16000"] if output_format == "wav" else None,
         )
 
         print(

@@ -1,251 +1,279 @@
-import { Component, OnInit,ViewChild, ElementRef, AfterViewInit, NgZone, ChangeDetectorRef  } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { IonContent, IonTitle, IonToolbar } from '@ionic/angular/standalone';
-import { AuthService } from '../auth/services/auth.service';
-import { Router } from '@angular/router';
-import { IonRouterOutlet } from '@ionic/angular';
-import { IonicModule, AlertController, LoadingController } from '@ionic/angular';
-
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Navbar } from "../navbar/navbar"; // Import HttpClient
+import { IonicModule } from '@ionic/angular';
+import { Router } from '@angular/router';
+import { Navbar } from '../navbar/navbar';
+import { AuthService } from '../auth/services/auth.service';
 
+type SpeechRecognitionConstructor = new () => any;
 
 @Component({
   selector: 'app-acceuil-user',
+  standalone: true,
+  imports: [CommonModule, FormsModule, IonicModule, Navbar],
   templateUrl: './acceuil-user.page.html',
   styleUrls: ['./acceuil-user.page.scss'],
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    IonicModule,
-    Navbar
-]
-
 })
-export class AcceuilUserPage implements OnInit,AfterViewInit {
+export class AcceuilUserPage implements OnInit, OnDestroy {
   @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
 
-  isAuthenticated = false;
-  username: string | null = null;
-  uploadedFileName: string = '';
   uploadedFile: File | null = null;
-  mediaUrl: string = '';
-  isLoading: boolean = false;  // Flag to track the loading state
-  loadingMessage: string = 'Converting...';  // Message during conversion
-  transcribedText: string = '';
-  showLogout = false; // Contrôle direct de la visibilité
+  uploadedFileName = '';
+  mediaUrl = '';
+  isLoading = false;
+  errorMessage = '';
+  liveTranscript = '';
+  interimTranscript = '';
+  isRecording = false;
+  recordingSeconds = 0;
+  supportsLiveTranscription = false;
+  activeSource: 'voice' | 'file' | 'youtube' | null = null;
+  private isLiveRecordingSource = false;
+  selectedLanguage = 'auto';
+  readonly languages = [
+    { code: 'auto', label: 'Auto-detect language' },
+    { code: 'ar', label: 'العربية / التونسي' },
+    { code: 'fr', label: 'Français' },
+    { code: 'en', label: 'English' },
+    { code: 'it', label: 'Italiano' },
+    { code: 'es', label: 'Español' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'tr', label: 'Türkçe' },
+  ];
 
-
+  private recorder?: MediaRecorder;
+  private stream?: MediaStream;
+  private recognition?: any;
+  private recordedChunks: Blob[] = [];
+  private timer?: ReturnType<typeof setInterval>;
 
   constructor(
-    private router: Router,
-    private authService: AuthService,
-    private loadingCtrl: LoadingController,
-    private alertCtrl: AlertController,
-    private cdr: ChangeDetectorRef,
-    private ngZone: NgZone,
-    private http: HttpClient,
-   ) { }
+    private readonly router: Router,
+    private readonly authService: AuthService,
+    private readonly http: HttpClient,
+  ) {}
 
-
-  ngOnInit() {
-    this.isAuthenticated = this.authService.isLoggedIn();
-    console.log('🔐 Authenticated:', this.isAuthenticated);
-    this.authService.username$.subscribe(digits => this.username = digits);
-    this.username = localStorage.getItem('username');
-    console.log('🔑 Username:', this.username);
-  }
-  ngAfterViewInit() {
-    console.log('fileInput chargé ?', this.fileInputRef.nativeElement);
+  ngOnInit(): void {
+    this.supportsLiveTranscription = this.getSpeechRecognitionConstructor() !== undefined;
   }
 
-
-  logout() {
-    this.authService.logout();
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('username');
-    this.router.navigate(['/login']);
-    logout: this.showLogout = false; // Cache avant action
-
-
-  }
-  getFirstLetter(name: string | undefined | null): string {
-    return name ? name.charAt(0).toUpperCase() : '';
+  ngOnDestroy(): void {
+    this.stopMediaTracks();
+    this.stopTimer();
   }
 
-  Homeuser() {
+  get recordingTime(): string {
+    const minutes = Math.floor(this.recordingSeconds / 60).toString().padStart(2, '0');
+    const seconds = (this.recordingSeconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  }
+
+  get hasSource(): boolean {
+    return Boolean(this.uploadedFile || this.mediaUrl.trim());
+  }
+
+  triggerFileInput(): void {
+    this.activeSource = 'file';
+    this.fileInputRef.nativeElement.click();
+  }
+
+  openYoutubeInput(): void {
+    this.activeSource = 'youtube';
+    setTimeout(() => document.getElementById('youtube-url')?.focus());
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploadedFile = file;
+    this.uploadedFileName = file.name;
+    this.mediaUrl = '';
+    this.activeSource = 'file';
+    this.isLiveRecordingSource = false;
+    this.errorMessage = '';
+    input.value = '';
+  }
+
+  clearFile(): void {
     this.uploadedFile = null;
     this.uploadedFileName = '';
-    this.mediaUrl = '';
+    this.isLiveRecordingSource = false;
+  }
 
-    // Réinitialiser l'input file (pour éviter qu'il garde l'ancien fichier)
-    const fileInput = document.getElementById('fileInput') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = ''; // Réinitialisation de l'élément HTML input file
+  async toggleRecording(): Promise<void> {
+    if (this.isRecording) {
+      this.stopRecording();
+      return;
     }
-
-    // Réinitialiser l'input URL
-    const urlInput = document.getElementById('urlInput') as HTMLInputElement;
-    if (urlInput) {
-      urlInput.value = ''; // Réinitialisation de l'élément HTML input URL
-    }
-
-    this.router.navigate(['/acceuil-user']);
+    await this.startRecording();
   }
 
-  History() {
-    this.router.navigate(['/history']);
-  }
-  Contact() {
-    this.router.navigate(['/contact']);
-  }
-
-  triggerFileInput() {
-    setTimeout(() => {
-      if (this.fileInputRef && this.fileInputRef.nativeElement) {
-        console.log('fileInput déclenché');
-        this.fileInputRef.nativeElement.click();
-      }
-    }, 300);
-  }
-
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      this.uploadedFile = file;
-      this.uploadedFileName = file.name;
-      this.mediaUrl = '';
-
-      this.ngZone.run(() => {
-        this.uploadedFile = file;
-        this.uploadedFileName = file.name;
-        this.mediaUrl = '';
-        console.log('Fichier sélectionné :', this.uploadedFileName);
-        this.cdr.detectChanges();
-      });
-
-      input.value = '';
-    } else {
-      this.uploadedFile = null;
-      this.uploadedFileName = '';
-    }
-  }
-
-
-
-
-  canConvert(): boolean {
-    return !!this.uploadedFile || (!!this.mediaUrl && this.mediaUrl.trim().length > 0);
-  }
-  async presentLoading() {
-    const loading = await this.loadingCtrl.create({
-      message: 'Converting...',  // Custom message
-      spinner: 'crescent',  // Spinner type
-      cssClass: 'full-page-loading',  // Custom CSS class to style the full page spinner
-      backdropDismiss: false,  // Disable dismiss when clicked outside
-    });
-
-    await loading.present();  // Show the loading spinner
-    return loading;  // Return the loading instance
-  }
-  async convertToText() {
-    if (!this.canConvert()) {
-      alert('Please select a file or enter a URL before continuing.');
+  private async startRecording(): Promise<void> {
+    this.errorMessage = '';
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      this.errorMessage = 'Microphone recording is not supported by this browser.';
       return;
     }
 
-    this.isLoading = true;
-    this.loadingMessage = 'Converting...';
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : '';
+      this.recorder = mimeType
+        ? new MediaRecorder(this.stream, { mimeType })
+        : new MediaRecorder(this.stream);
+      this.recordedChunks = [];
+      this.activeSource = 'voice';
+      this.liveTranscript = '';
+      this.interimTranscript = '';
+      this.recordingSeconds = 0;
 
-    let formData = new FormData();
-    let apiUrl = '';
-
-    if (this.uploadedFile) {
-      apiUrl = 'http://localhost:3000/ai/transcribe';
-      formData.append('file', this.uploadedFile);
-
-      const loading = await this.loadingCtrl.create({
-        spinner: 'crescent',
-        message: this.loadingMessage,
-        cssClass: 'full-page-loading',
-      });
-      await loading.present();
-
-      const token = this.authService.getToken();
-      if (!token) {
-        alert('Error: Token not available. Please log in.');
-        return;
-      }
-
-      const headers = new HttpHeaders({
-        Authorization: `Bearer ${token}`
-      });
-
-
-      this.http.post<{ text: string }>(apiUrl, formData, { headers }).subscribe({
-        next: (response) => {
-          console.log('✅ Réponse reçue:', response);
-          if (response.text) {
-            this.transcribedText = response.text;
-            this.router.navigate(['/view'], { queryParams: { text: this.transcribedText } });
-          } else {
-            alert("Transcription failed.");
-          }
-          this.isLoading = false;
-          loading.dismiss();
-        },
-        error: (error) => {
-          console.error('🚨 Erreur de transcription:', error);
-          alert('Error during transcription. Please check the file or the URL.');
-          this.isLoading = false;
-          loading.dismiss();
-        }
-      });
-
-    } else if (this.mediaUrl.trim()) {
-      apiUrl = 'http://localhost:3000/ai/process';
-      const requestBody = { url: encodeURIComponent(this.mediaUrl) };
-
-
-      const loading = await this.loadingCtrl.create({
-        spinner: 'crescent',
-        message: this.loadingMessage,
-        cssClass: 'full-page-loading',
-      });
-      await loading.present();
-
-
-      const headers = {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.authService.getToken()}`,
+      this.recorder.ondataavailable = ({ data }) => {
+        if (data.size > 0) this.recordedChunks.push(data);
       };
-
-      this.http.post<{ text: string }>(apiUrl, requestBody, { headers }).subscribe({
-        next: (response) => {
-          console.log('✅ Réponse reçue:', response);
-          if (response.text) {
-            this.transcribedText = response.text;
-            this.router.navigate(['/view'], { queryParams: { text: this.transcribedText } });
-          } else {
-            alert("The transcription failed..");
-          }
-          this.isLoading = false;
-          loading.dismiss();
-        },
-        error: (error) => {
-          console.error('🚨 Erreur de transcription:', error);
-          alert('Transcription error. Please check the file or the URL.');
-          this.isLoading = false;
-          loading.dismiss();
-        }
-      });
+      this.recorder.onstop = () => this.sendRecordedAudio();
+      this.recorder.start(1000);
+      this.isRecording = true;
+      this.startTimer();
+      this.startLiveSpeechRecognition();
+    } catch (error) {
+      console.error('Microphone access failed:', error);
+      this.errorMessage = 'Please allow microphone access, then try again.';
+      this.stopMediaTracks();
     }
   }
 
+  private stopRecording(): void {
+    this.isRecording = false;
+    this.stopTimer();
+    this.recognition?.stop();
+    if (this.recorder?.state === 'recording') this.recorder.stop();
+  }
 
+  private startLiveSpeechRecognition(): void {
+    const Recognition = this.getSpeechRecognitionConstructor();
+    if (!Recognition) return;
+    this.recognition = new Recognition();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
+    this.recognition.lang = this.getRecognitionLocale();
+    this.recognition.onresult = (event: any) => {
+      let interim = '';
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const text = event.results[index][0].transcript;
+        if (event.results[index].isFinal) this.liveTranscript += `${text} `;
+        else interim += text;
+      }
+      this.interimTranscript = interim;
+    };
+    this.recognition.onerror = (event: any) => {
+      // Recording continues and the server still creates the final transcript.
+      if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        console.warn('Live speech recognition:', event.error);
+      }
+    };
+    this.recognition.onend = () => {
+      if (this.isRecording) this.recognition.start();
+    };
+    this.recognition.start();
+  }
 
+  private getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | undefined {
+    const browser = window as any;
+    return browser.SpeechRecognition || browser.webkitSpeechRecognition;
+  }
+
+  private sendRecordedAudio(): void {
+    this.stopMediaTracks();
+    if (!this.recordedChunks.length) return;
+    const type = this.recorder?.mimeType || 'audio/webm';
+    const audio = new File([new Blob(this.recordedChunks, { type })], `recording-${Date.now()}.webm`, { type });
+    this.uploadedFile = audio;
+    this.uploadedFileName = 'Live recording';
+    this.isLiveRecordingSource = true;
+    // Browser speech recognition needs a fixed locale; its "auto" mode is the
+    // browser/UI locale and can turn French or Arabic into English.  Only use
+    // the instant draft when the speaker explicitly chose a microphone
+    // language.  In Auto mode Whisper receives the recording and detects the
+    // spoken language from the audio itself.
+    const instantText = `${this.liveTranscript} ${this.interimTranscript}`.trim();
+    if (instantText && this.selectedLanguage !== 'auto') {
+      this.router.navigate(['/view'], { queryParams: { text: instantText } });
+      return;
+    }
+    // A browser without live captions still uses Whisper as a safe fallback.
+    this.convertToText();
+  }
+
+  convertToText(): void {
+    if (!this.hasSource || this.isLoading) return;
+    this.errorMessage = '';
+    this.isLoading = true;
+    const token = this.authService.getToken();
+    const headers = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
+
+    if (this.uploadedFile) {
+      const formData = new FormData();
+      formData.append('file', this.uploadedFile, this.uploadedFile.name);
+      // File transcription must detect the language from its own audio. Only
+      // a live recording uses the language explicitly selected by the speaker.
+      if (this.isLiveRecordingSource && this.selectedLanguage !== 'auto') {
+        formData.append('language', this.selectedLanguage);
+      }
+      this.http.post<{ text: string }>('http://localhost:3000/ai/transcribe', formData, { headers }).subscribe({
+        next: ({ text }) => this.openResult(text),
+        error: (error) => this.handleConversionError(error),
+      });
+      return;
+    }
+
+    this.http.post<{ text: string }>('http://localhost:3000/ai/process', {
+      url: encodeURIComponent(this.mediaUrl.trim()),
+      // YouTube audio is always automatically detected. Never reuse a language
+      // choice made for a previous microphone recording.
+    }, { headers }).subscribe({
+      next: ({ text }) => this.openResult(text),
+      error: (error) => this.handleConversionError(error),
+    });
+  }
+
+  private openResult(text: string): void {
+    this.isLoading = false;
+    if (!text?.trim()) {
+      this.errorMessage = 'No speech was detected. Please try a clearer audio source.';
+      return;
+    }
+    this.router.navigate(['/view'], { queryParams: { text } });
+  }
+
+  private handleConversionError(error: any): void {
+    console.error('Transcription error:', error);
+    this.isLoading = false;
+    this.errorMessage = error?.error?.message || 'We could not transcribe this source. Please try again.';
+  }
+
+  private startTimer(): void {
+    this.stopTimer();
+    this.timer = setInterval(() => this.recordingSeconds += 1, 1000);
+  }
+
+  private stopTimer(): void {
+    if (this.timer) clearInterval(this.timer);
+  }
+
+  private stopMediaTracks(): void {
+    this.stream?.getTracks().forEach(track => track.stop());
+    this.stream = undefined;
+  }
+
+  private getRecognitionLocale(): string {
+    const locales: Record<string, string> = {
+      ar: 'ar-TN', fr: 'fr-FR', en: 'en-US', it: 'it-IT', es: 'es-ES', de: 'de-DE', tr: 'tr-TR',
+    };
+    return locales[this.selectedLanguage] || navigator.language || 'fr-FR';
+  }
 }

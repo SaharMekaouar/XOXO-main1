@@ -1,63 +1,58 @@
-<div class="container">
-  <!-- ✅ Correction de ion-header => Utilisation de header pour éviter les conflits -->
+<ion-content class="workspace-page">
   <app-navbar></app-navbar>
-  <main class="upload-section">
 
-    <div class="upload-box">
-      <div class="icon-container">
-        <div class="icon" (click)="triggerFileInput()">
-          <img src="assets/icon/icon.png" />
+  <main class="workspace">
+    <section class="studio" aria-label="Transcription studio">
+      <div class="studio-topbar">
+        <div>
+          <p class="studio-kicker">RECAPIFY · TRANSCRIPTION</p>
+          <h1>Start with a source</h1>
         </div>
-        <input type="file" #fileInput accept="audio/*, video/*" (change)="onFileSelected($event)" hidden>
-        <p *ngIf="uploadedFileName">{{ uploadedFileName }}</p>
+        <div class="language-picker">
+          <span>Language</span>
+          <select [(ngModel)]="selectedLanguage" [disabled]="isRecording || isLoading || (activeSource !== null && activeSource !== 'voice')" aria-label="Spoken language">
+            <option *ngFor="let language of languages" [value]="language.code">{{ language.label }}</option>
+          </select>
+        </div>
       </div>
 
-      <p class="upload-text">CLICK TO ADD YOUR CLIP</p>
-      <p>OR</p>
-      <input type="text" id="urlInput" placeholder="INSERT LINK TO THE MEDIA" class="input-link" [(ngModel)]="mediaUrl" (ngModelChange)="uploadedFile = null">
+      <div class="source-grid">
+        <button type="button" class="source-card voice-card" [class.active]="activeSource === 'voice'" (click)="toggleRecording()" [disabled]="isLoading">
+          <img src="assets/studio/voice.svg" alt="Microphone">
+          <span class="source-title">Record voice</span>
+          <span class="source-description">Speak live and turn it into text</span>
+          <span class="source-action">{{ isRecording ? 'Stop recording' : 'Start recording' }}</span>
+        </button>
 
-      <ion-button [disabled]="!canConvert() " (click)="convertToText()">CONVERT TO TEXT</ion-button>
-    </div>
+        <button type="button" class="source-card file-card" [class.active]="activeSource === 'file'" (click)="triggerFileInput()" [disabled]="isRecording || isLoading">
+          <img src="assets/studio/file.svg" alt="File upload">
+          <span class="source-title">Upload file</span>
+          <span class="source-description">MP3, WAV, M4A, MP4 or WebM</span>
+          <span class="source-action">{{ uploadedFileName || 'Choose from computer' }}</span>
+        </button>
+
+        <button type="button" class="source-card youtube-card" [class.active]="activeSource === 'youtube'" (click)="openYoutubeInput()" [disabled]="isRecording || isLoading">
+          <img src="assets/studio/youtube.svg" alt="YouTube">
+          <span class="source-title">YouTube video</span>
+          <span class="source-description">Use any public video link</span>
+          <span class="source-action">Paste link</span>
+        </button>
+        <input #fileInput type="file" accept="audio/*,video/*,.webm" (change)="onFileSelected($event)" hidden>
+      </div>
+
+      <section class="youtube-panel" *ngIf="activeSource === 'youtube'">
+        <div class="youtube-heading"><img src="assets/studio/youtube.svg" alt=""><div><strong>Paste your YouTube link</strong><span>We will extract the audio and create the transcript.</span></div></div>
+        <div class="youtube-field"><input id="youtube-url" type="url" [(ngModel)]="mediaUrl" (ngModelChange)="clearFile()" placeholder="https://www.youtube.com/watch?v=..."><button type="button" (click)="convertToText()" [disabled]="!mediaUrl.trim() || isLoading">{{ isLoading ? 'Processing…' : 'Transcribe video' }}</button></div>
+      </section>
+
+      <section class="record-panel" *ngIf="isRecording || liveTranscript" [class.is-recording]="isRecording">
+        <div class="record-status"><span class="record-dot"></span><strong>{{ isRecording ? 'LISTENING LIVE' : 'LIVE DRAFT' }}</strong><time>{{ recordingTime }}</time></div>
+        <p dir="auto">{{ liveTranscript }}<span class="interim">{{ interimTranscript || (isRecording ? ' Listening…' : '') }}</span></p>
+        <small *ngIf="isRecording">Stop the microphone to open your transcript immediately.</small>
+      </section>
+
+      <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <div class="footer-row"><span><b>File and YouTube:</b> language is detected automatically. For live voice, choose a language for instant captions.</span><button type="button" class="continue-button" (click)="convertToText()" [disabled]="!hasSource || isLoading || isRecording">{{ isLoading ? 'Creating…' : 'Create transcript' }}</button></div>
+    </section>
   </main>
-
-  <footer class="desktop-only">
-    <p>© 2025 Recapify Inc. All rights reserved.</p>
-  </footer>
-
-  <ion-footer class ="mobile-only">
-    <ion-toolbar>
-      <ion-buttons class="footer-buttons">
-        <!-- Bouton History -->
-        <ion-button 
-          class="footer-button" 
-          fill="clear"
-          (click)="History()">
-          <div class="button-content">
-            <ion-icon name="document-text-outline"></ion-icon>
-            <ion-label class="footer-label">My content</ion-label>
-          </div>
-        </ion-button>
-        <!-- Bouton Home -->
-        <ion-button 
-          class="footer-button" 
-          fill="clear"
-          (click)="Homeuser()">
-          <div class="button-content">
-            <ion-icon name="home-outline"></ion-icon>
-            <ion-label class="footer-label">Home</ion-label>
-          </div>
-        </ion-button>
-        <!-- Bouton Help -->
-        <ion-button
-          class="footer-button" 
-          fill="clear"
-          (click)="Contact()">
-          <div class="button-content">
-            <ion-icon name="help-circle-outline"></ion-icon>
-            <ion-label class="footer-label">Help</ion-label>
-          </div>
-        </ion-button>
-      </ion-buttons>
-    </ion-toolbar>
-  </ion-footer>
-</div>
+</ion-content>

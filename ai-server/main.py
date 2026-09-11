@@ -71,10 +71,25 @@ device = (
     if torch.cuda.is_available()
     else "cpu"
 )
-# `small` is recommended for better multilingual vocabulary once downloaded.
-# Keep `base` as the reliable default so the service can always start offline.
-# Deployment can override it (for example, WHISPER_MODEL=small or medium).
-WHISPER_MODEL = os.getenv("WHISPER_MODEL", "base")
+# PyTorch otherwise defaults to only two CPU workers in this environment.
+# Use the available cores for noticeably faster local transcription while
+# keeping the higher-quality multilingual Small checkpoint.
+CPU_THREADS = min(os.cpu_count() or 1, int(os.getenv("WHISPER_THREADS", "4")))
+if device == "cpu":
+    torch.set_num_threads(CPU_THREADS)
+# `small` is installed locally and is substantially more accurate than `base`
+# for Arabic, French and code-switched speech.  It can still be overridden.
+WHISPER_MODEL = os.getenv("WHISPER_MODEL", "small")
+
+TRANSCRIPTION_PROMPTS = {
+    "ar": "اكتب الكلام المسموع باللغة العربية فقط، مع علامات الترقيم الصحيحة. قد يكون المتحدث باللهجة التونسية.",
+    "fr": "Transcris fidèlement en français avec une orthographe et une ponctuation correctes.",
+    "en": "Transcribe the spoken English faithfully with correct punctuation.",
+    "it": "Trascrivi fedelmente l'italiano parlato con punteggiatura corretta.",
+    "es": "Transcribe fielmente el español hablado con puntuación correcta.",
+    "de": "Transkribiere das gesprochene Deutsch mit korrekter Zeichensetzung.",
+    "tr": "Konuşulan Türkçeyi doğru noktalama ile yazıya dök.",
+}
 
 print(
     f"Whisper utilise : {device}"
@@ -232,7 +247,9 @@ async def transcribe_audio(
 
     file: UploadFile = File(None),
 
-    url: str = Form(None)
+    url: str = Form(None),
+
+    language: str = Form(None)
 ):
 
     temp_file_path = None
@@ -386,14 +403,18 @@ async def transcribe_audio(
             task="transcribe",
             # Let Whisper determine the spoken language rather than forcing
             # English; this is essential for French, Arabic, Italian, etc.
-            language=None,
+            # `None` retains automatic detection; the chosen UI language lets
+            # Whisper decode accents and local vocabulary more accurately.
+            language=language if language and language != "auto" else None,
+            initial_prompt=TRANSCRIPTION_PROMPTS.get(language),
             fp16=device == "cuda",
             beam_size=5,
             patience=1.0,
-            temperature=(0.0, 0.2, 0.4),
-            # Prevent a bad segment from being used as a prompt for all later
-            # segments, a common source of repeated/wrong vocabulary.
-            condition_on_previous_text=False,
+            # Deterministic beam search prevents random word substitutions.
+            temperature=0.0,
+            # Carry context across segments so vocabulary and sentence flow
+            # remain coherent in a long French or Arabic video.
+            condition_on_previous_text=True,
             compression_ratio_threshold=2.2,
             logprob_threshold=-1.0,
             no_speech_threshold=0.6,
@@ -401,7 +422,7 @@ async def transcribe_audio(
         )
 
 
-        text = result["text"]
+        text = result["text"].strip()
 
 
         print(
@@ -410,7 +431,9 @@ async def transcribe_audio(
 
 
         return {
-            "text": text
+            "text": text,
+            "detected_language": result.get("language"),
+            "model": WHISPER_MODEL,
         }
 
 
