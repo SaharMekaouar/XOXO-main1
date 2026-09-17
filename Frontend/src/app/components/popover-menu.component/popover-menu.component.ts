@@ -17,6 +17,8 @@ import { SavedTextService } from 'src/app/auth/services/saved-text.service';
 export class PopoverMenuComponent {
   translateMenuOpen = false;
   summarizeMenuOpen = false;
+  @Input() showTranslate: boolean = true;
+  @Input() showSummarize: boolean = true;
   constructor(private popoverCtrl: PopoverController,  private alertCtrl: AlertController,   private toastController: ToastController,
     private toastCtrl: ToastController,  private http: HttpClient,   private loadingCtrl: LoadingController,  private loadingController: LoadingController,
     private authService: AuthService,

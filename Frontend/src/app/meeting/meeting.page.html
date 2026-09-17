@@ -1,0 +1,70 @@
+<ion-content class="workspace-page">
+  <app-navbar></app-navbar>
+
+  <main class="workspace">
+    <section class="studio" aria-label="Meeting translation">
+      <div class="studio-topbar">
+        <div>
+          <p class="studio-kicker">RECAPIFY · MEETING</p>
+          <h1>Réunion multilingue en direct</h1>
+        </div>
+        <ion-button fill="clear" (click)="presentPopover($event)" [disabled]="!dialogue.length">
+          <ion-icon name="menu-outline"></ion-icon>
+        </ion-button>
+      </div>
+
+      <section class="speakers-panel">
+        <h2>Participants</h2>
+        <div class="speakers-list">
+          <button type="button"
+                  *ngFor="let speaker of speakers"
+                  class="speaker-chip"
+                  [class.active]="speaker.id === activeSpeakerId"
+                  [disabled]="isRecording"
+                  (click)="selectSpeaker(speaker.id)">
+            <span class="speaker-name">{{ speaker.name }}</span>
+            <span class="speaker-lang">{{ languageLabel(speaker.lang) }}</span>
+            <span class="speaker-remove" (click)="$event.stopPropagation(); removeSpeaker(speaker.id)">✕</span>
+          </button>
+        </div>
+
+        <div class="add-speaker">
+          <input type="text" [(ngModel)]="newSpeakerName" placeholder="Nom du participant" [disabled]="isRecording">
+          <select [(ngModel)]="newSpeakerLang" [disabled]="isRecording">
+            <option *ngFor="let language of languages" [value]="language.code">{{ language.label }}</option>
+          </select>
+          <button type="button" (click)="addSpeaker()" [disabled]="isRecording || !newSpeakerName.trim()">Ajouter</button>
+        </div>
+      </section>
+
+      <section class="record-controls">
+        <p *ngIf="!activeSpeaker" class="hint">Sélectionne ou ajoute un participant, puis enregistre son tour de parole.</p>
+        <button type="button"
+                class="record-button"
+                [class.recording]="isRecording"
+                [disabled]="!activeSpeaker || isProcessing"
+                (click)="toggleRecording()">
+          {{ isRecording ? 'Arrêter (' + recordingTime + ')' : (activeSpeaker ? 'Enregistrer ' + activeSpeaker.name : 'Enregistrer') }}
+        </button>
+        <span *ngIf="isProcessing" class="processing">Transcription & traduction…</span>
+      </section>
+
+      <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <section class="dialogue" aria-label="Conversation">
+        <article class="turn" *ngFor="let turn of dialogue">
+          <header>
+            <strong>{{ turn.speakerName }}</strong>
+            <span class="turn-lang">{{ languageLabel(turn.originalLang) }}</span>
+          </header>
+          <p class="original" dir="auto">{{ turn.originalText }}</p>
+          <div class="translations" *ngIf="turn.translations | keyvalue as entries">
+            <p class="translation" *ngFor="let entry of entries" dir="auto">
+              <span class="translation-lang">{{ languageLabel(entry.key) }} :</span> {{ entry.value }}
+            </p>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+</ion-content>

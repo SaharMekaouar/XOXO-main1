@@ -1,5 +1,6 @@
 <ion-list class="popover-menu">
   <!-- Translate -->
+   <ng-container *ngIf="showTranslate">
   <ion-item button (click)="toggleSubmenu('translate')" class="menu-item">
     <ion-icon slot="start" name="language-outline"></ion-icon>
     <ion-label>Translate</ion-label>
@@ -31,8 +32,9 @@
       <ion-label>Arabic</ion-label>
     </ion-chip>
   </div>
-  
+  </ng-container>
   <!-- Summarize -->
+   <ng-container *ngIf="showSummarize">
   <ion-item button (click)="toggleSubmenu('summarize')" class="menu-item">
     <ion-icon slot="start" name="document-text-outline"></ion-icon>
     <ion-label>Summarize</ion-label>
@@ -49,7 +51,7 @@
     </ion-chip>
    
   </div>
-  
+  </ng-container>
   <!-- Autres options -->
   <ion-item button (click)="selectAction('edit')" class="menu-item">
     <ion-icon slot="start" name="create-outline"></ion-icon>

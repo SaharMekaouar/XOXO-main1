@@ -276,4 +276,7 @@ export class AcceuilUserPage implements OnInit, OnDestroy {
     };
     return locales[this.selectedLanguage] || navigator.language || 'fr-FR';
   }
+  goToMeeting(): void {
+  this.router.navigate(['/meeting']);
+}
 }

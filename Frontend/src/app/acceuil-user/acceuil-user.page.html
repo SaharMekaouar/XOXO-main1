@@ -37,6 +37,12 @@
           <span class="source-description">Use any public video link</span>
           <span class="source-action">Paste link</span>
         </button>
+        <button type="button" class="source-card meeting-card" (click)="goToMeeting()" [disabled]="isRecording || isLoading">
+  <img src="assets/studio/meeting.jpg" alt="Meeting">
+  <span class="source-title">Meeting</span>
+  <span class="source-description">Traduction en direct pour plusieurs locuteurs</span>
+  <span class="source-action">Démarrer une réunion</span>
+</button>
         <input #fileInput type="file" accept="audio/*,video/*,.webm" (change)="onFileSelected($event)" hidden>
       </div>
 
