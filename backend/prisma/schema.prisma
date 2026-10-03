@@ -52,3 +52,54 @@ model Category {
   texts     SavedText[]
   @@index([userId])
 }
+model Meeting {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  adminUserId String
+  adminLang   String   @default("fr")
+  mode        String   @default("remote") // "onsite" | "remote"
+  title       String?
+  status      String   @default("active") // "active" | "ended"
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants MeetingParticipant[]
+  turns        MeetingTurn[]
+
+  @@index([adminUserId])
+}
+
+model MeetingParticipant {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  meetingId   String   @db.ObjectId
+  meeting     Meeting  @relation(fields: [meetingId], references: [id])
+
+  name        String
+  email       String?
+  lang        String
+  inviteToken String   @unique
+  status      String   @default("invited") // "invited" | "joined" | "removed"
+
+  createdAt   DateTime @default(now())
+
+  @@index([meetingId])
+}
+
+model MeetingTurn {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+
+  meetingId     String   @db.ObjectId
+  meeting       Meeting  @relation(fields: [meetingId], references: [id])
+
+  participantId String?  @db.ObjectId
+  speakerName   String
+  originalLang  String
+  originalText  String
+  translations  Json
+
+  createdAt     DateTime @default(now())
+
+  @@index([meetingId])
+}

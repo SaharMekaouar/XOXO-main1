@@ -21,6 +21,7 @@ import { CategoryModule } from './category/category.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { MailModule } from './mail/mail.module';
 import { TranslationModule } from './translate/translate.module';
+import { MeetingModule } from './meeting/meeting.module';
 @Module({
   imports: [PrismaModule,
     ThrottlerModule.forRoot([
@@ -51,7 +52,8 @@ import { TranslationModule } from './translate/translate.module';
     SummarizeModule,
     SavedTextModule,
     CategoryModule,
-  TranslationModule] ,
+    TranslationModule,
+    MeetingModule] ,
   controllers: [AppController, AuthController,SummarizeController],
   providers: [AppService,PrismaService,SummarizeService, {
     provide: APP_GUARD,

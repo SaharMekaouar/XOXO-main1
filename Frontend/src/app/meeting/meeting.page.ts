@@ -5,25 +5,28 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { IonicModule, PopoverController, LoadingController, ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { io, Socket } from 'socket.io-client';
 import { Navbar } from '../navbar/navbar';
 import { AuthService } from '../auth/services/auth.service';
 import { SavedTextService } from '../auth/services/saved-text.service';
 import { PopoverMenuComponent } from '../components/popover-menu.component/popover-menu.component';
 
-interface Speaker {
-  id: string;
-  name: string;
-  lang: string;
-}
-
 interface DialogueTurn {
   id: string;
-  speakerId: string;
+  speakerId?: string;
   speakerName: string;
   originalLang: string;
   originalText: string;
   translations: Record<string, string>;
   timestamp: number;
+}
+
+interface RemoteParticipant {
+  id: string;
+  name: string;
+  email: string;
+  lang: string;
+  status: string;
 }
 
 @Component({
@@ -44,16 +47,25 @@ export class MeetingPage implements OnDestroy {
     { code: 'tr', label: 'Türkçe' },
   ];
 
-  speakers: Speaker[] = [];
-  newSpeakerName = '';
-  newSpeakerLang = 'fr';
+  // La réunion n'existe pas encore tant que l'admin n'a pas validé le formulaire.
+  remoteMeetingId: string | null = null;
+  remoteParticipants: RemoteParticipant[] = [];
+  inviteName = '';
+  inviteEmail = '';
+  inviteLang = 'fr';
+  adminName = '';
+  adminLang = 'fr';
+  private socket?: Socket;
 
-  activeSpeakerId: string | null = null;
+  // === Verrou de parole (un seul locuteur à la fois) ===
+  private readonly adminSpeakerId = 'admin';
+  lockedSpeakerName: string | null = null;
+
+  // === Commun ===
   isRecording = false;
   isProcessing = false;
   recordingSeconds = 0;
   errorMessage = '';
-
   dialogue: DialogueTurn[] = [];
 
   private recorder?: MediaRecorder;
@@ -74,16 +86,13 @@ export class MeetingPage implements OnDestroy {
   ngOnDestroy(): void {
     this.stopMediaTracks();
     this.stopTimer();
+    this.socket?.disconnect();
   }
 
   get recordingTime(): string {
     const m = Math.floor(this.recordingSeconds / 60).toString().padStart(2, '0');
     const s = (this.recordingSeconds % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
-  }
-
-  get activeSpeaker(): Speaker | undefined {
-    return this.speakers.find(s => s.id === this.activeSpeakerId);
   }
 
   get dialogueAsText(): string {
@@ -97,27 +106,142 @@ export class MeetingPage implements OnDestroy {
     }).join('\n\n');
   }
 
-  addSpeaker(): void {
-    const name = this.newSpeakerName.trim();
-    if (!name) return;
-    this.speakers.push({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      name,
-      lang: this.newSpeakerLang,
+  private authHeaders(): HttpHeaders | undefined {
+    const token = this.authService.getToken();
+    return token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
+  }
+
+  // === Création de la réunion ===
+
+  async createMeeting(): Promise<void> {
+    if (!this.adminName.trim()) {
+      this.errorMessage = 'Indique ton nom avant de créer la réunion.';
+      return;
+    }
+    const headers = this.authHeaders();
+    try {
+      const meeting = await firstValueFrom(
+        this.http.post<{ id: string }>('http://localhost:3000/meeting', { mode: 'remote', lang: this.adminLang }, { headers }),
+      );
+      this.remoteMeetingId = meeting.id;
+      this.connectSocket(meeting.id);
+      await this.loadPastTurns();
+    } catch (error) {
+      console.error('Meeting creation failed:', error);
+      this.errorMessage = 'Impossible de créer la réunion.';
+    }
+  }
+
+  private connectSocket(meetingId: string): void {
+    this.socket = io('http://localhost:3000/meeting', { query: { meetingId } });
+
+    this.socket.on('new-turn', (turn: DialogueTurn) => {
+      if (!this.dialogue.some(t => t.id === turn.id)) {
+        this.dialogue.push(turn);
+      }
     });
-    this.newSpeakerName = '';
-    if (!this.activeSpeakerId) this.activeSpeakerId = this.speakers[this.speakers.length - 1].id;
+
+    this.socket.on('participants-updated', (participants: RemoteParticipant[]) => {
+      this.remoteParticipants = participants;
+    });
+
+    this.socket.on('speaker-locked', (data: { speakerId: string; speakerName: string }) => {
+      this.lockedSpeakerName = data.speakerId === this.adminSpeakerId ? null : data.speakerName;
+    });
+
+    this.socket.on('speaker-unlocked', () => {
+      this.lockedSpeakerName = null;
+    });
   }
 
-  removeSpeaker(id: string): void {
-    this.speakers = this.speakers.filter(s => s.id !== id);
-    if (this.activeSpeakerId === id) this.activeSpeakerId = this.speakers[0]?.id || null;
+  private async loadPastTurns(): Promise<void> {
+    if (!this.remoteMeetingId) return;
+    const headers = this.authHeaders();
+    try {
+      const turns = await firstValueFrom(
+        this.http.get<DialogueTurn[]>(`http://localhost:3000/meeting/${this.remoteMeetingId}/turns`, { headers }),
+      );
+      this.dialogue = turns;
+    } catch (error) {
+      console.error('Failed to load past turns:', error);
+    }
   }
 
-  selectSpeaker(id: string): void {
-    if (this.isRecording) return;
-    this.activeSpeakerId = id;
+  // === Verrou de parole ===
+
+  private requestSpeak(): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (!this.socket || !this.remoteMeetingId) { resolve(true); return; }
+      this.socket.emit(
+        'request-speak',
+        { meetingId: this.remoteMeetingId, speakerId: this.adminSpeakerId, speakerName: this.adminName || 'Admin' },
+        (response: { granted: boolean; speakerName?: string }) => {
+          if (!response.granted) {
+            this.errorMessage = `${response.speakerName} est en train de parler, patiente un instant.`;
+          }
+          resolve(response.granted);
+        },
+      );
+    });
   }
+
+  private releaseSpeak(): void {
+    if (this.socket && this.remoteMeetingId) {
+      this.socket.emit('release-speak', { meetingId: this.remoteMeetingId, speakerId: this.adminSpeakerId });
+    }
+  }
+
+  // === Invitations ===
+
+  async sendInvite(): Promise<void> {
+    if (!this.remoteMeetingId || !this.inviteName.trim() || !this.inviteEmail.trim()) return;
+    const headers = this.authHeaders();
+    try {
+      await firstValueFrom(
+        this.http.post(
+          `http://localhost:3000/meeting/${this.remoteMeetingId}/invite`,
+          { name: this.inviteName.trim(), email: this.inviteEmail.trim(), lang: this.inviteLang },
+          { headers },
+        ),
+      );
+      const toast = await this.toastCtrl.create({ message: 'Invitation envoyée !', duration: 2000, color: 'success' });
+      await toast.present();
+      this.inviteName = '';
+      this.inviteEmail = '';
+      await this.refreshParticipants();
+    } catch (error) {
+      console.error('Invite failed:', error);
+      const toast = await this.toastCtrl.create({ message: "Échec de l'envoi de l'invitation.", duration: 2500, color: 'danger' });
+      await toast.present();
+    }
+  }
+
+  async refreshParticipants(): Promise<void> {
+    if (!this.remoteMeetingId) return;
+    const headers = this.authHeaders();
+    try {
+      this.remoteParticipants = await firstValueFrom(
+        this.http.get<RemoteParticipant[]>(`http://localhost:3000/meeting/${this.remoteMeetingId}/participants`, { headers }),
+      );
+    } catch (error) {
+      console.error('Failed to load participants:', error);
+    }
+  }
+
+  async removeRemoteParticipant(participantId: string): Promise<void> {
+    if (!this.remoteMeetingId) return;
+    const headers = this.authHeaders();
+    try {
+      await firstValueFrom(
+        this.http.delete(`http://localhost:3000/meeting/${this.remoteMeetingId}/participants/${participantId}`, { headers }),
+      );
+      await this.refreshParticipants();
+    } catch (error) {
+      console.error('Remove participant failed:', error);
+    }
+  }
+
+  // === Enregistrement ===
 
   async toggleRecording(): Promise<void> {
     if (this.isRecording) {
@@ -129,12 +253,13 @@ export class MeetingPage implements OnDestroy {
 
   private async startRecording(): Promise<void> {
     this.errorMessage = '';
-    if (!this.activeSpeaker) {
-      this.errorMessage = 'Choisis qui parle avant d’enregistrer.';
-      return;
-    }
+
+    const granted = await this.requestSpeak();
+    if (!granted) return;
+
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
       this.errorMessage = 'L’enregistrement micro n’est pas supporté par ce navigateur.';
+      this.releaseSpeak();
       return;
     }
     try {
@@ -154,6 +279,7 @@ export class MeetingPage implements OnDestroy {
       console.error('Microphone access failed:', error);
       this.errorMessage = 'Autorise l’accès au micro, puis réessaie.';
       this.stopMediaTracks();
+      this.releaseSpeak();
     }
   }
 
@@ -165,79 +291,55 @@ export class MeetingPage implements OnDestroy {
 
   private handleRecordingStopped(): void {
     this.stopMediaTracks();
-    if (!this.recordedChunks.length || !this.activeSpeaker) return;
+    if (!this.recordedChunks.length) return;
     const type = this.recorder?.mimeType || 'audio/webm';
     const audio = new File([new Blob(this.recordedChunks, { type })], `turn-${Date.now()}.webm`, { type });
-    this.processTurn(audio, this.activeSpeaker);
+    this.processRemoteAdminTurn(audio);
   }
 
-  private processTurn(audio: File, speaker: Speaker): void {
+  private processRemoteAdminTurn(audio: File): void {
     this.isProcessing = true;
     this.errorMessage = '';
-    const token = this.authService.getToken();
-    const headers = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
+    const headers = this.authHeaders();
     const formData = new FormData();
     formData.append('file', audio, audio.name);
-    formData.append('language', speaker.lang);
+    formData.append('language', this.adminLang);
 
     this.http.post<{ text: string }>('http://localhost:3000/ai/transcribe', formData, { headers }).subscribe({
-      next: ({ text }) => this.translateTurn(text, speaker, headers),
+      next: ({ text }) => this.translateAndSendRemoteTurn(text, this.adminName, this.adminLang, headers),
       error: (error) => this.handleError(error),
     });
   }
 
-  private translateTurn(originalText: string, speaker: Speaker, headers?: HttpHeaders): void {
+  private translateAndSendRemoteTurn(originalText: string, speakerName: string, speakerLang: string, headers?: HttpHeaders): void {
     const trimmed = originalText?.trim();
     if (!trimmed) {
       this.isProcessing = false;
       this.errorMessage = 'Aucune parole détectée pour ce tour.';
+      this.releaseSpeak();
       return;
     }
+    const targetLangs = Array.from(new Set(this.remoteParticipants.filter(p => p.lang !== speakerLang).map(p => p.lang)));
+    const translations: Record<string, string> = {};
 
-    const targetLangs = Array.from(new Set(
-      this.speakers.filter(s => s.lang !== speaker.lang).map(s => s.lang)
-    ));
-
-    const turn: DialogueTurn = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      speakerId: speaker.id,
-      speakerName: speaker.name,
-      originalLang: speaker.lang,
-      originalText: trimmed,
-      translations: {},
-      timestamp: Date.now(),
+    const finalize = () => {
+      if (!this.remoteMeetingId) return;
+      this.http.post(`http://localhost:3000/meeting/${this.remoteMeetingId}/turns`, {
+        speakerName, originalLang: speakerLang, originalText: trimmed, translations,
+      }, { headers }).subscribe({
+        next: () => { this.isProcessing = false; this.releaseSpeak(); },
+        error: (error) => this.handleError(error),
+      });
     };
 
-    if (!targetLangs.length) {
-      this.dialogue.push(turn);
-      this.isProcessing = false;
-      return;
-    }
-
+    if (!targetLangs.length) { finalize(); return; }
     let remaining = targetLangs.length;
     targetLangs.forEach((tgtLang) => {
       this.http.post<{ translation: string }>('http://localhost:3000/translate', {
-        text: trimmed,
-        srcLang: speaker.lang,
-        tgtLang,
+        text: trimmed, srcLang: speakerLang, tgtLang,
       }, { headers }).subscribe({
-        next: ({ translation }) => {
-          turn.translations[tgtLang] = translation;
-          remaining -= 1;
-          if (remaining === 0) {
-            this.dialogue.push(turn);
-            this.isProcessing = false;
-          }
-        },
-        error: (error) => {
-          console.error(`Translation to ${tgtLang} failed:`, error);
-          turn.translations[tgtLang] = '⚠️ échec de traduction';
-          remaining -= 1;
-          if (remaining === 0) {
-            this.dialogue.push(turn);
-            this.isProcessing = false;
-          }
-        },
+        next: ({ translation }) => { translations[tgtLang] = translation; remaining -= 1; if (remaining === 0) finalize(); },
+        error: () => { translations[tgtLang] = '⚠️ échec de traduction'; remaining -= 1; if (remaining === 0) finalize(); },
       });
     });
   }
@@ -250,6 +352,7 @@ export class MeetingPage implements OnDestroy {
     console.error('Meeting turn error:', error);
     this.isProcessing = false;
     this.errorMessage = error?.error?.message || 'Impossible de traiter ce tour de parole. Réessaie.';
+    this.releaseSpeak();
   }
 
   private startTimer(): void {
@@ -266,38 +369,22 @@ export class MeetingPage implements OnDestroy {
     this.stream = undefined;
   }
 
+  // === Menu (Save / Download / Share) ===
+
   async presentPopover(ev: Event): Promise<void> {
     const popover = await this.popoverCtrl.create({
       component: PopoverMenuComponent,
       event: ev,
       translucent: true,
       showBackdrop: true,
-      componentProps: {
-        transcribedText: this.dialogueAsText,
-        showTranslate: false,
-        showSummarize: false,
-      },
+      componentProps: { transcribedText: this.dialogueAsText, showTranslate: false, showSummarize: false },
     });
-
     await popover.present();
     const { data } = await popover.onDidDismiss();
-
     switch (data) {
-      case 'save':
-        await this.saveDialogue();
-        break;
-      case 'download':
-        this.downloadDialogue();
-        break;
-      case 'share':
-        this.shareDialogue();
-        break;
-      case 'edit':
-        this.toastCtrl.create({
-          message: "L'édition manuelle du dialogue n'est pas encore disponible.",
-          duration: 2000,
-        }).then(t => t.present());
-        break;
+      case 'save': await this.saveDialogue(); break;
+      case 'download': this.downloadDialogue(); break;
+      case 'share': this.shareDialogue(); break;
     }
   }
 
@@ -342,12 +429,11 @@ export class MeetingPage implements OnDestroy {
 
   private shareDialogue(): void {
     this.http.post<any>('http://localhost:3000/text/generate-url', {
-      type: 'meeting',
-      text: this.dialogueAsText,
+      type: 'meeting', text: this.dialogueAsText,
     }).subscribe({
       next: (res) => {
         navigator.clipboard.writeText(res.url);
-        this.toastCtrl.create({ message: 'Lien copié dans le presse-papiers !', duration: 2000 }).then(t => t.present());
+        this.toastCtrl.create({ message: 'Lien copié !', duration: 2000 }).then(t => t.present());
       },
       error: () => {
         this.toastCtrl.create({ message: 'Impossible de générer le lien.', duration: 2000, color: 'danger' }).then(t => t.present());
