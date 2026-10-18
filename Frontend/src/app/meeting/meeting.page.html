@@ -13,58 +13,69 @@
         </ion-button>
       </div>
 
-      <section class="speakers-panel">
-        <h2>Participants</h2>
-        <div class="speakers-list">
-          <button type="button"
-                  *ngFor="let speaker of speakers"
-                  class="speaker-chip"
-                  [class.active]="speaker.id === activeSpeakerId"
-                  [disabled]="isRecording"
-                  (click)="selectSpeaker(speaker.id)">
-            <span class="speaker-name">{{ speaker.name }}</span>
-            <span class="speaker-lang">{{ languageLabel(speaker.lang) }}</span>
-            <span class="speaker-remove" (click)="$event.stopPropagation(); removeSpeaker(speaker.id)">✕</span>
-          </button>
-        </div>
-
+      <!-- Avant la création : juste le nom + la langue de l'admin -->
+      <section class="create-panel" *ngIf="!remoteMeetingId">
+        <h2>Créer la réunion</h2>
         <div class="add-speaker">
-          <input type="text" [(ngModel)]="newSpeakerName" placeholder="Nom du participant" [disabled]="isRecording">
-          <select [(ngModel)]="newSpeakerLang" [disabled]="isRecording">
+          <input type="text" [(ngModel)]="adminName" placeholder="Ton nom">
+          <select [(ngModel)]="adminLang">
             <option *ngFor="let language of languages" [value]="language.code">{{ language.label }}</option>
           </select>
-          <button type="button" (click)="addSpeaker()" [disabled]="isRecording || !newSpeakerName.trim()">Ajouter</button>
+          <button type="button" (click)="createMeeting()">Créer la réunion</button>
         </div>
       </section>
 
-      <section class="record-controls">
-        <p *ngIf="!activeSpeaker" class="hint">Sélectionne ou ajoute un participant, puis enregistre son tour de parole.</p>
-        <button type="button"
-                class="record-button"
-                [class.recording]="isRecording"
-                [disabled]="!activeSpeaker || isProcessing"
-                (click)="toggleRecording()">
-          {{ isRecording ? 'Arrêter (' + recordingTime + ')' : (activeSpeaker ? 'Enregistrer ' + activeSpeaker.name : 'Enregistrer') }}
-        </button>
-        <span *ngIf="isProcessing" class="processing">Transcription & traduction…</span>
-      </section>
-
-      <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
-
-      <section class="dialogue" aria-label="Conversation">
-        <article class="turn" *ngFor="let turn of dialogue">
-          <header>
-            <strong>{{ turn.speakerName }}</strong>
-            <span class="turn-lang">{{ languageLabel(turn.originalLang) }}</span>
-          </header>
-          <p class="original" dir="auto">{{ turn.originalText }}</p>
-          <div class="translations" *ngIf="turn.translations | keyvalue as entries">
-            <p class="translation" *ngFor="let entry of entries" dir="auto">
-              <span class="translation-lang">{{ languageLabel(entry.key) }} :</span> {{ entry.value }}
-            </p>
+      <!-- Une fois la réunion créée : invitations + enregistrement -->
+      <ng-container *ngIf="remoteMeetingId">
+        <section class="remote-panel">
+          <h2>Inviter un participant</h2>
+          <div class="add-speaker">
+            <input type="text" [(ngModel)]="inviteName" placeholder="Nom">
+            <input type="email" [(ngModel)]="inviteEmail" placeholder="Email">
+            <select [(ngModel)]="inviteLang">
+              <option *ngFor="let language of languages" [value]="language.code">{{ language.label }}</option>
+            </select>
+            <button type="button" (click)="sendInvite()" [disabled]="!inviteName.trim() || !inviteEmail.trim()">Envoyer l'invitation</button>
           </div>
-        </article>
-      </section>
+
+          <div class="speakers-list" *ngIf="remoteParticipants.length">
+            <div class="speaker-chip" *ngFor="let p of remoteParticipants">
+              <span class="speaker-name">{{ p.name }}</span>
+              <span class="speaker-lang">{{ languageLabel(p.lang) }}</span>
+              <span class="participant-status">{{ p.status === 'joined' ? '🟢 connecté' : '⏳ invité' }}</span>
+              <span class="speaker-remove" (click)="removeRemoteParticipant(p.id)">✕</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="record-controls">
+          <button type="button" class="record-button" [class.recording]="isRecording"
+                  [disabled]="isProcessing || !!lockedSpeakerName" (click)="toggleRecording()">
+            {{ isRecording ? 'Arrêter (' + recordingTime + ')' : 'Enregistrer' }}
+          </button>
+          <span *ngIf="isProcessing" class="processing">Transcription & traduction…</span>
+          <span *ngIf="lockedSpeakerName && !isRecording" class="processing">{{ lockedSpeakerName }} est en train de parler…</span>
+        </section>
+
+        <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+        <section class="dialogue" aria-label="Conversation">
+          <article class="turn" *ngFor="let turn of dialogue">
+            <header>
+              <strong>{{ turn.speakerName }}</strong>
+              <span class="turn-lang">{{ languageLabel(turn.originalLang) }}</span>
+            </header>
+            <p class="original" dir="auto">{{ turn.originalText }}</p>
+            <div class="translations" *ngIf="turn.translations | keyvalue as entries">
+              <p class="translation" *ngFor="let entry of entries" dir="auto">
+                <span class="translation-lang">{{ languageLabel(entry.key) }} :</span> {{ entry.value }}
+              </p>
+            </div>
+          </article>
+        </section>
+      </ng-container>
+
+      <p class="error-message" *ngIf="errorMessage && !remoteMeetingId">{{ errorMessage }}</p>
     </section>
   </main>
 </ion-content>

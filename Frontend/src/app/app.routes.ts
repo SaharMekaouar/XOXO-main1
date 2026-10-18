@@ -49,9 +49,21 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+<<<<<<< HEAD
     path: 'meeting',
     loadComponent: () => import('./meeting/meeting.page').then(m => m.MeetingPage),
     canActivate: [AuthGuard]
   },
   { path: '**', redirectTo: '' },
 ];
+=======
+  path: 'meeting',
+  loadComponent: () => import('./meeting/meeting.page').then(m => m.MeetingPage),
+  canActivate: [AuthGuard]
+},
+{
+  path: 'meeting-guest',
+  loadComponent: () => import('./meeting-guest/meeting-guest.page').then(m => m.MeetingGuestPage),
+},
+];
+>>>>>>> 9aa3b9d919548cd5d351ab4a0f368c8989a44234

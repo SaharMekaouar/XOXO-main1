@@ -30,7 +30,9 @@
     "@nestjs/mongoose": "^11.0.3",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.11",
+    "@nestjs/platform-socket.io": "^11.2.6",
     "@nestjs/throttler": "^6.5.0",
+    "@nestjs/websockets": "^11.2.6",
     "@prisma/client": "^6.19.3",
     "@xenova/transformers": "^2.17.2",
     "axios": "^1.8.3",
@@ -52,7 +54,11 @@
     "resend": "^6.20.0",
     "router": "^2.2.0",
     "rxjs": "^7.8.1",
+<<<<<<< HEAD
     "twilio": "^6.1.2",
+=======
+    "socket.io": "^4.8.4",
+>>>>>>> 9aa3b9d919548cd5d351ab4a0f368c8989a44234
     "uuid": "^11.1.0"
   },
   "devDependencies": {

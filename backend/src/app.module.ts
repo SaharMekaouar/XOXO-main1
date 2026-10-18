@@ -20,8 +20,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { CategoryModule } from './category/category.module';
 import { MailModule } from './mail/mail.module';
 import { TranslationModule } from './translate/translate.module';
+<<<<<<< HEAD
 import { VerificationModule } from './verification/verification.module';
 import { VerificationController } from './verification/verification.controller';
+=======
+import { MeetingModule } from './meeting/meeting.module';
+>>>>>>> 9aa3b9d919548cd5d351ab4a0f368c8989a44234
 @Module({
   imports: [PrismaModule,
     ThrottlerModule.forRoot([
@@ -39,9 +43,15 @@ import { VerificationController } from './verification/verification.controller';
     SummarizeModule,
     SavedTextModule,
     CategoryModule,
+<<<<<<< HEAD
   TranslationModule,
   VerificationModule] ,
   controllers: [AppController, AuthController,SummarizeController, VerificationController],
+=======
+    TranslationModule,
+    MeetingModule] ,
+  controllers: [AppController, AuthController,SummarizeController],
+>>>>>>> 9aa3b9d919548cd5d351ab4a0f368c8989a44234
   providers: [AppService,PrismaService,SummarizeService, {
     provide: APP_GUARD,
     useClass: ThrottlerGuard,

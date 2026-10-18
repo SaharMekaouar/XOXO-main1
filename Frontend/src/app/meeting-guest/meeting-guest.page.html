@@ -1,0 +1,35 @@
+<ion-content class="guest-page">
+  <main class="guest-workspace">
+    <div class="guest-card" *ngIf="isLoading">
+      <p>Connexion à la réunion…</p>
+    </div>
+
+    <div class="guest-card" *ngIf="!isLoading && errorMessage">
+      <p class="error-message">{{ errorMessage }}</p>
+    </div>
+
+    <div class="guest-card" *ngIf="!isLoading && meetingInfo">
+      <p class="guest-kicker">RECAPIFY · RÉUNION</p>
+      <h1>Bonjour {{ meetingInfo.participant.name }}</h1>
+      <p class="guest-sub">Tu participes en {{ languageLabel(meetingInfo.participant.lang) }}</p>
+
+      <button type="button" class="record-button" [class.recording]="isRecording"
+              [disabled]="isProcessing" (click)="toggleRecording()">
+        {{ isRecording ? 'Arrêter (' + recordingTime + ')' : 'Parler' }}
+      </button>
+      <span *ngIf="isProcessing" class="processing">Envoi en cours…</span>
+      <span *ngIf="lockedSpeakerName && !isRecording" class="processing">{{ lockedSpeakerName }} est en train de parler…</span>
+      <section class="dialogue">
+        <article class="turn" *ngFor="let turn of dialogue">
+          <header><strong>{{ turn.speakerName }}</strong></header>
+          <p class="original" dir="auto">{{ turn.originalText }}</p>
+          <div class="translations" *ngIf="turn.translations | keyvalue as entries">
+            <p class="translation" *ngFor="let entry of entries" dir="auto">
+              <span class="translation-lang">{{ languageLabel(entry.key) }} :</span> {{ entry.value }}
+            </p>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+</ion-content>
