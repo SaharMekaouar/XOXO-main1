@@ -1,59 +1,68 @@
-<ion-content class="ion-padding">
+<ion-content class="ion-padding signup-content" [fullscreen]="true">
   <div class="form-container">
-    <a (click)="Home()" style="position: relative; display: block; text-align: center; margin-top: 30px; margin-bottom: 30px;">
-      <ion-img 
-        src="assets/icon/left.jpeg" 
-        style="position: absolute; left:15px; top: 50%; transform: translateY(-50%); height: 30px; width: auto;">
-      </ion-img>
-  
-      <ion-img 
-        src="assets/icon/Logo2.png" 
-        style="height: 50px; width: auto;">
-      </ion-img>
-    </a>
+    <div class="signup-header">
+      <button type="button" class="back-button" (click)="Home()" aria-label="Back">
+        <img src="assets/icon/left.jpeg" alt="Back" />
+      </button>
+      <img class="logo" src="assets/icon/Logo2.png" alt="Recapify" />
+    </div>
 
-    <!-- Full Name Input -->
-    <ion-item>
-      <ion-input
+    <form class="signup-form" (ngSubmit)="signup()">
+      <input
+        class="text-field"
         [(ngModel)]="user.name"
+        name="name"
         placeholder="Full Name"
         required
-      ></ion-input>
-    </ion-item>
+        autocomplete="name"
+      />
 
-    <!-- Email Input -->
-    <ion-item>
-      <ion-input
+      <input
+        class="text-field"
         [(ngModel)]="user.email"
+        name="email"
         type="email"
         placeholder="Email"
         required
-      ></ion-input>
-    </ion-item>
+        autocomplete="email"
+      />
 
-    <!-- Password Input -->
-    <ion-item>
-      <ion-input
+      <input
+        class="text-field"
+        [(ngModel)]="user.phone"
+        name="phone"
+        type="tel"
+        placeholder="Phone Number (optional)"
+        autocomplete="tel"
+      />
+
+      <input
+        class="text-field"
         [(ngModel)]="user.password"
+        name="password"
         type="password"
         placeholder="Password"
         required
-      ></ion-input>
-    </ion-item>
+        autocomplete="new-password"
+      />
 
-    <!-- Sign Up Button -->
-    <ion-button
-      expand="full"
-      (click)="signup()"
-      [disabled]="!user.name || !user.email || !user.password"
-    >
-      Sign Up
-    </ion-button>
+      <button
+        class="signup-button"
+        type="submit"
+        [disabled]="isLoading || !user.name || !user.email || !user.password"
+      >
+        <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+        <span *ngIf="!isLoading">Sign Up</span>
+      </button>
+    </form>
 
-    <!-- Google Sign-In Button Container -->
-    <div id="googleSignInButton" class="google-signin-container"></div>
+    <div class="divider"><span>or</span></div>
 
-    <!-- Login Link -->
+    <div *ngIf="!isNative" id="googleSignInButton" class="google-signin-container"></div>
+    <button *ngIf="isNative" type="button" class="google-button" (click)="continueWithGoogle()">
+      Continue with Google
+    </button>
+
     <p class="back-to-login">
       Already have an account?
       <a (click)="backlogin()">Login</a>

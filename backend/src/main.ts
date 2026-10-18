@@ -13,11 +13,15 @@ async function bootstrap() {
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
   app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
   app.enableCors({
-    origin: true, 
+    origin: true,
+    credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],   
+    allowedHeaders: ['Content-Type', 'Authorization', 'ngrok-skip-browser-warning'],
   });
-  await app.listen(3000);
+  app.getHttpAdapter().getInstance().get('/health', (_req, res) => {
+    res.json({ ok: true });
+  });
+  await app.listen(3000, '0.0.0.0');
 }
 
 bootstrap();

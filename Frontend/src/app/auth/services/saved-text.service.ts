@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { environment } from 'src/environments/environment';
+import { getApiUrl } from 'src/app/core/api.config';
 import { Observable, catchError, throwError } from 'rxjs';
 import { AuthService } from './auth.service';
 import { createAuthorizationHeader } from 'src/app/utils/header';
@@ -9,8 +9,12 @@ import { createAuthorizationHeader } from 'src/app/utils/header';
   providedIn: 'root'
 })
 export class SavedTextService {
-  private baseUrl = `${environment.apiUrl}/saved-text`;
-  private categoryUrl = `${environment.apiUrl}/categories`;
+  private get baseUrl() {
+    return `${getApiUrl()}/saved-text`;
+  }
+  private get categoryUrl() {
+    return `${getApiUrl()}/categories`;
+  }
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 

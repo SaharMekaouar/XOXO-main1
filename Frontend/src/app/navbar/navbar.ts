@@ -92,7 +92,7 @@ export class Navbar implements OnInit {
   signup() {
     // Déconnexion de l'utilisateur (peut être améliorée avec JWT plus tard)
 
-    this.router.navigate(['signup']);
+    this.router.navigate(['/signup']);
   }
   logout() {
     this.authService.logout();

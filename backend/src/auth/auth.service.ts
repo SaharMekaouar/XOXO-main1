@@ -36,19 +36,24 @@ export class AuthService {
     }
   }
 
-  async signUp({ name, email, password }: SignupDto) {
+  async signUp({ name, email, password, phone }: SignupDto) {
+    email = email.trim().toLowerCase();
+    phone = phone?.trim() || undefined;
+    if (phone && /^\d{8}$/.test(phone)) phone = `+216${phone}`;
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       throw new BadRequestException('Email already in use');
     }
     const hashedPassword = await bcrypt.hash(password, 12);
     const user = await this.prisma.user.create({
-      data: { name, email, password: hashedPassword },
+      data: { name, email, password: hashedPassword, phone, emailVerified: true },
     });
+
     return this.generateAuthResponse(user);
   }
 
   async login(email: string, password: string) {
+    email = email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -57,7 +62,12 @@ export class AuthService {
     if (!passwordMatch) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return this.generateAuthResponse(user);
+
+    const loginChallenge = await this.jwtService.signAsync(
+      { sub: user.id, email: user.email, purpose: 'email-login' },
+      { expiresIn: '15m' },
+    );
+    return { verificationRequired: true, email: user.email, loginChallenge };
   }
 
   async forgotPassword(email: string) {
@@ -111,8 +121,8 @@ export class AuthService {
     if (!payload?.email || !payload?.name) {
       throw new UnauthorizedException('Invalid Google token payload');
     }
-    let user = await this.prisma.user.findUnique({ 
-      where: { email: payload.email } 
+    let user = await this.prisma.user.findUnique({
+      where: { email: payload.email }
     });
     if (!user) {
       user = await this.prisma.user.create({
@@ -122,7 +132,20 @@ export class AuthService {
           password: '',
         },
       });
+      // For Google signup, allow immediate access (email is verified by Google)
+      user.emailVerified = true;
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: true }
+      });
+      return this.generateAuthResponse(user);
     }
+
+    // Require verification for login
+    if (!user.emailVerified && !user.phoneVerified) {
+      throw new UnauthorizedException('Please verify your email or phone number before logging in');
+    }
+
     return this.generateAuthResponse(user);
   }
 
@@ -147,7 +170,7 @@ export class AuthService {
     return this.generateAuthResponse(user);
   }
 
-  private generateAuthResponse(user: any) {
+  generateAuthResponse(user: any) {
     const token = this.jwtService.sign({ 
       sub: user.id, 
       email: user.email,

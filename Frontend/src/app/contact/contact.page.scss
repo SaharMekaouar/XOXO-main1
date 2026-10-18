@@ -54,7 +54,9 @@ ion-content {
   background: white;
   padding: 30px;
   border-radius: 15px;
-  width: 400px;
+  width: min(400px, 100%);
+  max-width: 100%;
+  box-sizing: border-box;
   text-align: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   h2 {
@@ -244,7 +246,7 @@ footer {
   display: none;
 }
 // Improved Responsive (Mobile)
-@media screen and (max-width: 480px) {
+@media screen and (max-width: 900px) {
   .desktop-only {
     display: none;
   }

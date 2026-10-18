@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from 'src/app/auth/services/auth.service';
 import { SavedTextService } from 'src/app/auth/services/saved-text.service';
+import { getApiUrl } from 'src/app/core/api.config';
 @Component({
   standalone: true,
   imports: [CommonModule, IonicModule],
@@ -117,7 +118,7 @@ export class PopoverMenuComponent {
     this.isLoading = true;
     this.loadingMessage = 'Translating...';
     this.presentLoading1().then((loading) => {
-      this.http.post<any>('http://localhost:3000/translate', {
+      this.http.post<any>(getApiUrl() + '/translate', {
         text: this.originalText,
         srcLang: 'auto',
         tgtLang: targetLang
@@ -159,7 +160,7 @@ export class PopoverMenuComponent {
       subject,
       text: finalText
     };
-    this.http.post('http://localhost:3000/mail/send', payload).subscribe({
+    this.http.post(getApiUrl() + '/mail/send', payload).subscribe({
       next: () => {
         this.showToast(' Email sent successfully !');
       },

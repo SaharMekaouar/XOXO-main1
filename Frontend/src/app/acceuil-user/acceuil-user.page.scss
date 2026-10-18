@@ -34,7 +34,7 @@ app-navbar {
   z-index: 1;
 
   width: 100%;
-  min-height: calc(100vh - 76px);
+  min-height: 100dvh;
 
   box-sizing: border-box;
 
@@ -42,7 +42,7 @@ app-navbar {
   align-items: center;
   justify-content: center;
 
-  padding: 40px 28px 55px;
+  padding: 80px 28px;
 }
 
 
@@ -677,8 +677,7 @@ app-navbar {
 @media (min-width: 1200px) {
 
   .workspace {
-    padding-top: 45px;
-    padding-bottom: 65px;
+    padding: 80px 28px;
   }
 
   .studio {
@@ -694,9 +693,9 @@ app-navbar {
 @media (max-width: 900px) {
 
   .workspace {
-    min-height: calc(100vh - 76px);
+    min-height: 100dvh;
 
-    padding: 30px 20px 50px;
+    padding: 80px 20px;
   }
 
   .studio {
@@ -716,6 +715,12 @@ app-navbar {
    MOBILE
    ========================================================= */
 
+@media (max-width: 900px) {
+  .workspace {
+    padding: 80px 20px calc(100px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 @media (max-width: 760px) {
 
   .workspace-page {
@@ -727,9 +732,9 @@ app-navbar {
   .workspace {
     width: 100%;
 
-    min-height: calc(100vh - 76px);
+    min-height: 100dvh;
 
-    padding: 25px 15px 50px;
+    padding: 85px 15px calc(100px + env(safe-area-inset-bottom, 0px));
 
     align-items: center;
     justify-content: center;
@@ -833,7 +838,7 @@ app-navbar {
 @media (max-width: 470px) {
 
   .workspace {
-    padding: 20px 12px 40px;
+    padding: 76px 12px calc(76px + env(safe-area-inset-bottom, 0px));
   }
 
   .studio {
@@ -847,36 +852,36 @@ app-navbar {
   }
 
   .source-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 
     gap: 10px;
   }
 
   .source-card {
-    min-height: 138px;
+    min-height: 145px;
 
     display: grid;
 
-    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-columns: 40px minmax(0, 1fr);
 
-    column-gap: 14px;
+    column-gap: 7px;
 
     align-items: center;
 
-    padding: 15px;
+    padding: 9px;
   }
 
   .source-card img {
     grid-row: span 3;
 
-    width: 64px;
-    height: 64px;
+    width: 40px;
+    height: 40px;
 
     margin: 0;
   }
 
   .source-title {
-    font-size: 15px;
+    font-size: 12px;
   }
 
   .source-description {
@@ -884,7 +889,7 @@ app-navbar {
 
     margin: 3px 0;
 
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .source-action {
@@ -947,15 +952,15 @@ app-navbar {
   }
 
   .source-card {
-    grid-template-columns: 55px minmax(0, 1fr);
+    grid-template-columns: 34px minmax(0, 1fr);
 
-    column-gap: 11px;
+    column-gap: 5px;
 
-    padding: 13px;
+    padding: 7px;
   }
 
   .source-card img {
-    width: 55px;
-    height: 55px;
+    width: 34px;
+    height: 34px;
   }
 }

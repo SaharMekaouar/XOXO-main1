@@ -5,14 +5,16 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { IonicModule } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { Navbar } from '../navbar/navbar';
+import { Footer } from '../footer/footer';
 import { AuthService } from '../auth/services/auth.service';
+import { getApiUrl } from '../core/api.config';
 
 type SpeechRecognitionConstructor = new () => any;
 
 @Component({
   selector: 'app-acceuil-user',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule, Navbar],
+  imports: [CommonModule, FormsModule, IonicModule, Navbar, Footer],
   templateUrl: './acceuil-user.page.html',
   styleUrls: ['./acceuil-user.page.scss'],
 })
@@ -81,7 +83,6 @@ export class AcceuilUserPage implements OnInit, OnDestroy {
 
   openYoutubeInput(): void {
     this.activeSource = 'youtube';
-    setTimeout(() => document.getElementById('youtube-url')?.focus());
   }
 
   onFileSelected(event: Event): void {
@@ -224,14 +225,14 @@ export class AcceuilUserPage implements OnInit, OnDestroy {
       if (this.isLiveRecordingSource && this.selectedLanguage !== 'auto') {
         formData.append('language', this.selectedLanguage);
       }
-      this.http.post<{ text: string }>('http://localhost:3000/ai/transcribe', formData, { headers }).subscribe({
+      this.http.post<{ text: string }>(getApiUrl() + '/ai/transcribe', formData, { headers }).subscribe({
         next: ({ text }) => this.openResult(text),
         error: (error) => this.handleConversionError(error),
       });
       return;
     }
 
-    this.http.post<{ text: string }>('http://localhost:3000/ai/process', {
+    this.http.post<{ text: string }>(getApiUrl() + '/ai/process', {
       url: encodeURIComponent(this.mediaUrl.trim()),
       // YouTube audio is always automatically detected. Never reuse a language
       // choice made for a previous microphone recording.

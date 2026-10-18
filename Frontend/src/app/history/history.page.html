@@ -1,6 +1,4 @@
-<ion-header>
-    <app-navbar></app-navbar>
-  </ion-header>
+<app-navbar></app-navbar>
 <div class="container">
   
   <ion-content class="history-page">
@@ -25,15 +23,6 @@
   <span>{{ showOnlyFavorites ? 'Only Favorites' : 'All Texts' }}</span>
       </ion-chip>
 
-
-      <ion-chip class="category-chip" (click)="togglePinnedFilter()" style="color: #9893f4;">
-        <ion-icon
-        [name]="showOnlyPinned ? 'pin' : 'pin-outline'"
-        [color]="showOnlyPinned ? 'secondary' : 'medium'"
-        class="ion-margin-end"
-      ></ion-icon>
-      <span>{{ showOnlyPinned ? 'Only Pinned' : 'All Texts' }}</span>
-      </ion-chip>
 
       <ion-chip (click)="resetFilters()" [outline]="selectedCategory !== null || showOnlyPinned" style="color: #9893f4;">
         All
@@ -232,7 +221,7 @@
 
  <!-- ✅ Footer -->
   <footer class="footer desktop-only">
-    <p>© 2025 Recapify Inc. All rights reserved.</p>
+    <p>© 2026 Recapify Inc. All rights reserved.</p>
   </footer>
 
   <ion-footer class ="mobile-only">
@@ -272,4 +261,4 @@
     </ion-toolbar>
   </ion-footer>
 </div>
- 
+

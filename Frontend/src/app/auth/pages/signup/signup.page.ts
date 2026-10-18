@@ -1,15 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { GoogleSignInService } from '../../services/google-signin.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-
-declare global {
-  interface Window {
-    google?: any;
-  }
-}
+import { NotificationService } from '../../../shared/notification.service';
 
 @Component({
   selector: 'app-signup',
@@ -18,93 +14,71 @@ declare global {
   templateUrl: './signup.page.html',
   styleUrls: ['./signup.page.scss']
 })
-export class SignupPage implements OnInit {
-  user = { name: '', email: '', password: '' };
+export class SignupPage implements AfterViewInit {
+  user = { name: '', email: '', phone: '', password: '' };
+  isLoading = false;
+  isNative = false;
 
-  constructor(private authService: AuthService, private router: Router) {}
-
-  ngOnInit() {
-    if (!window.google) {
-      this.loadGoogleIdentityService();
-    } else {
-      this.initializeGoogleSignIn();
-    }
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private googleSignIn: GoogleSignInService,
+    private notification: NotificationService,
+  ) {
+    this.isNative = this.googleSignIn.isNative;
   }
 
-  loadGoogleIdentityService() {
-    if (document.getElementById('google-script')) return; 
-
-    const script = document.createElement('script');
-    script.id = 'google-script';
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => this.initializeGoogleSignIn();
-    document.head.appendChild(script);
+  ngAfterViewInit() {
+    this.googleSignIn.init();
   }
 
-  initializeGoogleSignIn() {
-    if (!window.google) {
-      console.error('Google Identity Services non chargé');
-      return;
-    }
-
-    window.google.accounts.id.initialize({
-      client_id: '283729564854-tcu951t4hhh4ia3igcsmb0q53rvuh9uq.apps.googleusercontent.com',
-      callback: (response: any) => this.googleLogin(response.credential),
-      prompt: 'select_account'
-    });
-
-    window.google.accounts.id.renderButton(
-      document.getElementById('googleSignInButton'),
-      { theme: 'outline', size: 'large', text: 'signup_with' }
-    );
-
-    window.google.accounts.id.prompt();
-  }
-
-  async googleLogin(token: string) {
+  async continueWithGoogle() {
     try {
-      this.authService.loginWithGoogle(token).subscribe({
-        next: (response) => {
-          //console.log('Connexion réussie via Google:', response);
-          sessionStorage.setItem('authToken', response.token); 
-          sessionStorage.setItem('username', response.username);
-          this.router.navigate(['/acceuil-user']);
-        },
-        error: (error) => {
-          console.error('Erreur de connexion Google:', error);
-         // alert('Connexion Google échouée. Veuillez réessayer.');
-        }
-      });
+      await this.googleSignIn.signIn();
     } catch (error) {
-      console.error('Erreur de gestion du token Google:', error);
+      console.error('Erreur de connexion Google:', error);
+      this.notification.error('Connexion Google échouée. Réessayez.');
     }
   }
 
   signup() {
-    this.authService.signup(this.user.name,this.user.email, this.user.password).subscribe({
-      next: (res: any) => {
-        //console.log('Inscription réussie ✅');
+    if (!this.user.name || !this.user.email || !this.user.password) {
+      this.notification.error('Veuillez remplir tous les champs.');
+      return;
+    }
 
-      
-        this.authService.setToken(res.token);
-        //console.log('Token stocké:', res.token);
-
-       
-        const decoded = JSON.parse(localStorage.getItem('decodedToken')!);
-        //console.log('🎉 Profil récupéré:', decoded);
-
+    this.isLoading = true;
+    const email = this.user.email.trim().toLowerCase();
+    this.authService.signup(this.user.name, email, this.user.password, this.user.phone).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.notification.success('Inscription réussie !');
         this.router.navigate(['/acceuil-user']);
       },
       error: (err) => {
+        this.isLoading = false;
         console.error('Erreur d\'inscription:', err);
-        alert('Échec de l\'inscription. Vérifiez vos informations.');
+        this.notification.error(this.signupErrorMessage(err));
       }
     });
   }
 
-
+  private signupErrorMessage(err: any): string {
+    if (err?.status === 0) {
+      return 'Impossible de joindre le serveur. Vérifiez le Wi-Fi et que le backend tourne.';
+    }
+    if (err?.status === 429) {
+      return 'Trop de tentatives. Attendez une minute.';
+    }
+    const message = err?.error?.message;
+    if (Array.isArray(message)) {
+      return message.join('\n');
+    }
+    if (typeof message === 'string' && message.length) {
+      return message;
+    }
+    return 'Échec de l\'inscription. Vérifiez vos informations.';
+  }
 
   backlogin() {
     this.router.navigate(['/login']);

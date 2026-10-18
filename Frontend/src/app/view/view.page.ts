@@ -9,13 +9,14 @@ import { HttpClient } from '@angular/common/http';
 import { LoadingController } from '@ionic/angular';
 import { ToastController } from '@ionic/angular';
 import { AuthService } from '../auth/services/auth.service';
-import jsPDF from 'jspdf';
 import { firstValueFrom } from 'rxjs';
 import { SavedTextService } from '../auth/services/saved-text.service';
 import { PopoverMenuComponent } from '../components/popover-menu.component/popover-menu.component';
 import { text } from 'ionicons/icons';
 import { Navbar } from "../navbar/navbar";
 import { Filesystem, Directory,Encoding  } from '@capacitor/filesystem';
+import { getApiUrl } from '../core/api.config';
+import { downloadTextAsPdf } from '../utils/pdf-download';
 @Component({
 
   selector: 'app-view',
@@ -256,7 +257,7 @@ sendEmail(to: string, subject: string) {
     text: this.transcribedText
   };
 
-  this.http.post('http://localhost:3000/mail/send', payload).subscribe({
+  this.http.post(getApiUrl() + '/mail/send', payload).subscribe({
     next: () => this.showToast('Email envoyé !'),
     error: err => this.showToast('Erreur envoi mail')
   });
@@ -388,7 +389,7 @@ summarizeText(text: string, summary_type: string, max_input_len: number = 2048) 
   };
 
   this.presentLoading().then((loading) => {
-    this.http.post<any>('http://localhost:3000/summarize/', payload).subscribe({
+    this.http.post<any>(getApiUrl() + '/summarize/', payload).subscribe({
       next: (response) => {
         console.log('✅ Summary received:', response);
 
@@ -476,7 +477,7 @@ async translateText(text: string, targetLang: string) {
   this.errorMessage = '';
 
   this.presentLoading1().then((loading) => {
-    this.http.post<any>('http://localhost:3000/translate', {
+    this.http.post<any>(getApiUrl() + '/translate', {
       text: text,
       // Always detect from the original transcription. `detectedLanguage` was
       // never reliably initialised, which made French/Arabic text be sent as
@@ -707,44 +708,8 @@ async downloadFile(format: 'pdf' | 'txt') {
       alert('Error saving TXT.');
     }
   } else if (format === 'pdf') {
-    const doc = new jsPDF();
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.text('Transcription', 105, 15, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
-    const marginLeft = 10;
-    const marginTop = 30;
-    const pageWidth = doc.internal.pageSize.width - 2 * marginLeft;
-    const splitText = doc.splitTextToSize(content, pageWidth);
-    doc.text(splitText, marginLeft, marginTop);
     try {
-      const pdfBlob = doc.output('blob');
-      const reader = new FileReader();
-      const base64Data = await new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => {
-          const base64data = reader.result?.toString().split(',')[1];
-          if (base64data) {
-            resolve(base64data);
-          } else {
-            reject(new Error('Failed to convert PDF to base64'));
-          }
-        };
-        reader.readAsDataURL(pdfBlob);
-      });
-      const now = new Date();
-      const timestamp = now.getFullYear().toString() + '.'+
-                    (now.getMonth() + 1).toString().padStart(2, '0') +'.'+
-                    now.getDate().toString().padStart(2, '0') ;
-
-      console.log('Taille des données base64:', base64Data.length);
-      const result = await Filesystem.writeFile({
-        path: `transcription_${timestamp}.pdf`,
-        data: base64Data,
-        directory: Directory.Documents
-      });
-      console.log('Fichier enregistré avec succès:', result);
-      alert('PDF file saved in Documents.');
+      await downloadTextAsPdf(content, `transcription-${Date.now()}.pdf`, 'Transcription');
     } catch (e: unknown) {
       console.error('PDF save error:', e);
       let errorMessage = 'Unknown error';
@@ -849,7 +814,7 @@ openModal() {
     text: this.translatedText || this.transcribedText,
   };
 
-  this.http.post<any>('http://localhost:3000/text/generate-url', payload).subscribe(
+  this.http.post<any>(getApiUrl() + '/text/generate-url', payload).subscribe(
     (res) => {
       const shareableUrl = res.url;
 

@@ -1,152 +1,280 @@
-/* Styling for ion-content */
-ion-content {
-  --background: none;
-  background: url("/assets/blobs.svg") no-repeat center center;
-  background-size: cover;
-  display: flex;
-  flex-direction: column; 
-  justify-content: center; /* Center the content horizontally */
-  align-items: center; /* Center the content vertically */
-  height: 100vh;
-  position: relative;
-  padding: 15px; /* Padding to keep content from touching the edges */
-  box-sizing: border-box;
+:host {
+  --field-bg: #1e1e1e;
+  --field-color: #ffffff;
+  --field-placeholder: #bdbdbd;
+  --primary: #9893f4;
+  --primary-hover: #9370db;
 }
 
-/* Container for the login form */
+.login-content {
+  --background: transparent;
+  --overflow: auto;
+  width: 100%;
+  height: 100%;
+}
+
+.login-page {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: 35px 20px 40px;
+  background-image: url("/assets/blobs.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  display: flex;
+  align-items: flex-start;
+}
+
 .login-container {
-  width: 100%; /* Full width of its parent container */
+  position: relative;
+  z-index: 2;
+  width: 100%;
   max-width: 450px;
-  height: 465px;
-  background: #fff;
+  min-height: 465px;
+  margin: 35px 0 0 10%;
   padding: 1.5rem;
+  box-sizing: border-box;
+  background: #ffffff;
   border-radius: 30px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
-  max-height: 80vh;
-  overflow: hidden;
-  margin: auto; /* Ensure the container is centered */
-}
-@media (min-width: 769px) {
-  .login-container {
-    margin-left: 10%; /* Déplace vers la gauche */
-    margin-top: 70px;
-  }
 }
 
-@media (max-width: 768px) {
-  .login-container {
-    padding: 1rem;
-    max-width: 90%;
-    max-height: 90vh;
-    margin-top: 35px;
-    max-height: 420px;         // ✅ Reduce visible height
-    
-    ion-button {
-      font-size: 0.9rem;
-      padding: 10px;
-    }
-  
-    ion-input {
-      font-size: 1rem;
-    }
-  }
-}
-
-/* Wrapper for the form */
-.form-wrapper {
-  width: 100%; /* Ensures the form takes up the full container width */
+.login-header {
+  position: relative;
+  width: 100%;
+  height: 80px;
   display: flex;
-  flex-direction: column; /* Stack form elements vertically */
-  justify-content: flex-start;
-  gap: 1rem; /* Adds spacing between form fields */
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 
-
-/* Prevent image from taking up too much space */
-.image-container {
-  width: 50%;
-  height: 100vh;
-  background: url("/assets/background/3094352R.png") no-repeat right center;
-  background-size: contain;
-  flex-shrink: 0; /* Prevent the image from shrinking */
+.logo {
+  display: block;
+  width: auto;
+  height: 50px;
+  max-width: 180px;
+  object-fit: contain;
 }
 
-.back-button:hover {
-  background: rgba(255, 255, 255, 0.5);
-  transform: scale(1.1);
+.back-button {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  padding: 5px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.back-icon {
+.back-button img {
+  display: block;
   width: 30px;
   height: 30px;
-  filter: blur();
+  object-fit: contain;
+  border-radius: 50%;
 }
 
-/* Button styling */
-ion-button {
-  --background: #9893f4;
-  --border-radius: 10px;
-  --color: white;
+.login-form {
   width: 100%;
-  font-size: 1rem;
-  padding: 12px;
-  transition: all 0.3s ease-in-out;
-
-  &:hover {
-    --background: #9370db;
-    transform: translateY(-2px);
-  }
-
-  &[disabled] {
-    opacity: 0.6;
-    pointer-events: none;
-    transform: none;
-  }
-
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-a {
+.field-group {
+  width: 100%;
+}
+
+.text-field {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  box-sizing: border-box;
+  padding: 16px 15px;
+  border: none;
+  border-radius: 10px;
+  background: var(--field-bg);
+  color: var(--field-color);
+  font-size: 1rem;
+  outline: none;
+}
+
+.text-field::placeholder {
+  color: var(--field-placeholder);
+  opacity: 1;
+}
+
+.error-text {
+  width: 100%;
+  margin-top: 5px;
+  padding-left: 5px;
+  box-sizing: border-box;
+  text-align: left;
+  color: #d9534f;
+  font-size: 0.85rem;
+}
+
+.login-button {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-button:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-button ion-spinner {
+  width: 22px;
+  height: 22px;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.google-signin-container {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.google-button {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #dadce0;
+  border-radius: 10px;
+  background: #fff;
+  color: #3c4043;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.forgot-password,
+.verify-account,
+.back-to-signup {
+  margin: 5px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.forgot-password a,
+.verify-account a,
+.back-to-signup a {
   color: #6a5acd;
   font-weight: bold;
   text-decoration: none;
-  transition: 0.3s;
-
-  &:hover {
-    text-decoration: underline;
-    cursor: pointer;
-  }
-}
-ion-item {
-  width: 100%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-ion-input {
-  width: 100%;
-  font-size: 1rem;
-}
 .background-image {
-  position: fixed;
+  position: absolute;
+  z-index: 1;
+  right: 3%;
   bottom: 0;
-  right: 0;
-  width: 45%; /* Réduire la taille sur les grands écrans */
-  margin-right: 3%;
+  width: 45%;
+  max-width: 700px;
   height: auto;
   opacity: 0.8;
-  pointer-events: none; /* Empêche l’image d'interférer avec les clics */
-  z-index: -1;
-  mix-blend-mode: multiply;
+  pointer-events: none;
+  object-fit: contain;
 }
 
-/* Ajustement pour les écrans de petite taille (mobile) */
-@media (max-width: 768px) {
-  .background-image {
-    width: 90%;
-    opacity: 0.8;
+@media (max-width: 1100px) {
+  .login-container {
+    margin-left: 5%;
   }
 
-  ion-content {
-    background: url("/assets/blobs-phone.svg") no-repeat center center;
+  .background-image {
+    width: 42%;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-page {
+    min-height: 100%;
+    padding: 20px 15px 40px;
+    background-image: url("/assets/blobs-phone.svg");
+    background-position: center;
     background-size: cover;
+    display: block;
+  }
+
+  .login-container {
+    width: 100%;
+    max-width: 450px;
+    min-height: auto;
+    margin: 15px auto 30px;
+    padding: 25px 20px 30px;
+    border-radius: 25px;
+  }
+
+  .background-image {
+    display: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .login-page {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .login-container {
+    padding: 20px 15px 25px;
+    border-radius: 22px;
+  }
+
+  .text-field {
+    min-height: 52px;
+  }
+
+  .forgot-password,
+  .verify-account,
+  .back-to-signup {
+    font-size: 0.82rem;
   }
 }

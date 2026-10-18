@@ -15,11 +15,18 @@ datasource db {
 model User {
   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-  name String 
+  name String
   email String  @unique
-  password String  
+  phone String?
+  password String
   resetToken  String?
   resetTokenExpiry DateTime?
+  emailVerified Boolean @default(false)
+  emailVerificationToken String?
+  emailVerificationExpiry DateTime?
+  phoneVerified Boolean @default(false)
+  phoneVerificationCode String?
+  phoneVerificationExpiry DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -1,0 +1,47 @@
+<ion-content class="verification-content" [fullscreen]="true">
+  <div class="verification-page">
+    <div class="verification-container">
+      <div class="verification-header">
+        <button type="button" class="back-button" (click)="goBack()" aria-label="Back">
+          <img src="assets/icon/left.jpeg" alt="Back" />
+        </button>
+        <img class="logo" src="assets/icon/Logo2.png" alt="Recapify" />
+      </div>
+
+      <div class="verification-title">
+        <h2>Check your email</h2>
+        <p>Login account: {{ email }}. Enter a separate email address to receive your 4-digit code.</p>
+      </div>
+
+      <div class="verification-form">
+        <div class="field-group">
+          <input class="text-field" type="email" [(ngModel)]="verificationEmail" name="verificationEmail"
+            placeholder="Email address to receive the code" required autocomplete="email" />
+        </div>
+
+        <button *ngIf="!codeSent" class="verify-button" type="button"
+          (click)="sendEmailVerification()" [disabled]="isLoading">
+          <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+          <span *ngIf="!isLoading">Send code</span>
+        </button>
+
+        <div *ngIf="codeSent" class="code-input-section">
+          <div class="field-group">
+            <input class="text-field" type="text" inputmode="numeric" pattern="[0-9]*"
+              [(ngModel)]="verificationCode" name="verificationCode"
+              placeholder="4-digit code" required maxlength="4" autocomplete="one-time-code" />
+          </div>
+
+          <button class="verify-button" type="button" (click)="verifyEmailCode()" [disabled]="isLoading">
+            <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+            <span *ngIf="!isLoading">Continue</span>
+          </button>
+
+          <p class="resend-text">Didn't receive the code? <a (click)="sendEmailVerification()">Resend</a></p>
+        </div>
+      </div>
+    </div>
+
+    <img src="assets/background/3094352RM.png" class="background-image" alt="" />
+  </div>
+</ion-content>

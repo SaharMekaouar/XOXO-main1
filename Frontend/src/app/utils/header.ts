@@ -1,7 +1,10 @@
 import { HttpHeaders } from '@angular/common/http';
 
 // Get token from local storage
-export const id_token = localStorage.getItem('access_token') || '';
+export const id_token = localStorage.getItem('access_token')
+  || localStorage.getItem('authToken')
+  || localStorage.getItem('token')
+  || '';
 
 // Default content headers
 export const contentHeaders = new HttpHeaders({
@@ -11,7 +14,10 @@ export const contentHeaders = new HttpHeaders({
 
 // Function to create Authorization header
 export function createAuthorizationHeader(): HttpHeaders {
-  const token = localStorage.getItem('access_token') || '';
+  const token = localStorage.getItem('access_token')
+    || localStorage.getItem('authToken')
+    || localStorage.getItem('token')
+    || '';
   return new HttpHeaders({
     'ngrok-skip-browser-warning': 'true',
     'Accept': 'application/json',

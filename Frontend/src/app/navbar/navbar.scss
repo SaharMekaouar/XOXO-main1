@@ -7,6 +7,15 @@ $secondary-color: #a38cd6; // Couleur secondaire (violet clair)
 $font-family: Arial, sans-serif; // Police de caractères
 $font-size-base: 16px; // Taille de base de la police
 $text-color: #333;
+
+:host {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
   
   .logo {
     display: flex;
@@ -86,32 +95,36 @@ $text-color: #333;
 }
 
 .navbar-connected {
-  padding-right:165px;
+  padding-right: 0;
 }
 
 /* SCSS */
 .desktop-only {
-  display: block;
-   display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding:  10px;
-    background: transparent;
-    box-shadow: none;
-    margin-bottom: 20px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 18px;
+  background: transparent;
+  box-shadow: none;
+  position: relative;
+}
+
+.desktop-only > nav {
+  justify-self: center;
+}
+
+.desktop-only .auth-buttons {
+  justify-self: end;
 }
 
 .mobile-only {
   display: none;
 }
-@media (max-width: 480px) {
+@media (max-width: 900px) {
   .auth-buttons {
-    margin-top: 27px;
+    margin-top: 0;
     display: flex;
     gap: 15px;
     button {
@@ -162,7 +175,7 @@ $text-color: #333;
   .logo {
     display: flex;
     align-items: center;
-    margin-top: 30px;
+    margin-top: 0;
     cursor: pointer;
     ion-img {
       height: 50px;
@@ -184,9 +197,7 @@ $text-color: #333;
     background-color: rgba(255, 255, 255, 1); 
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
-    position: fixed;
-    top: 0;
-    left: 0;
+    position: relative;
     z-index: 1000;
 }
 

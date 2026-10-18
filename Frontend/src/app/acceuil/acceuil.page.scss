@@ -1,8 +1,24 @@
+
 .acceuil-page {
   --background: #eef2f7;
   padding: 20px;
   text-align: center;
+
+  /* Fix scroll on Web + Mobile */
+  --overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
+
+/* Make Ionic content scroll correctly */
+.acceuil-page::part(scroll) {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* =========================
+   AUTH BUTTONS
+   ========================= */
 
 .auth-buttons {
   display: flex;
@@ -23,6 +39,7 @@
     background: transparent;
     color: #9893f4;
     border: 2px solid #9893f4;
+
     &:hover {
       background: #9893f4;
       color: white;
@@ -32,6 +49,7 @@
   .join-now {
     background: #9893f4;
     color: white;
+
     &:hover {
       background: #c8c5ff;
       color: #9893f4;
@@ -39,11 +57,17 @@
   }
 }
 
+/* =========================
+   IMAGES
+   ========================= */
 
 img {
-  // Adjust based on your logo size
   width: 350px;
 }
+
+/* =========================
+   HERO
+   ========================= */
 
 .hero {
   display: flex;
@@ -71,6 +95,10 @@ img {
   height: auto;
 }
 
+/* =========================
+   FEATURES
+   ========================= */
+
 .features {
   display: flex;
   justify-content: center;
@@ -82,7 +110,7 @@ img {
 }
 
 .second-row {
-  margin-top: 40px; // Adds spacing between rows
+  margin-top: 40px;
 }
 
 .feature {
@@ -98,6 +126,9 @@ img {
   }
 }
 
+/* =========================
+   FOOTER
+   ========================= */
 
 .footer {
   text-align: center;
@@ -106,11 +137,36 @@ img {
   color: #555;
 }
 
+/* =========================
+   ANIMATION
+   ========================= */
+
 @keyframes fadeInPage {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-buttons {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .hero-text h1 {
+    font-size: 2.1rem;
+  }
+
+  .hero-text p {
+    font-size: 1.05rem;
+  }
+
+  img {
+    width: min(350px, 100%);
   }
 }

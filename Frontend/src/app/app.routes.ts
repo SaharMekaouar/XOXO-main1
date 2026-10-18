@@ -22,6 +22,10 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/pages/reset-password/reset-password.page').then(m => m.ResetPasswordPage)
   },
   {
+    path: 'verification',
+    loadComponent: () => import('./auth/pages/verification/verification.page').then(m => m.VerificationPage)
+  },
+  {
     path: 'acceuil',
     loadComponent: () => import('./acceuil/acceuil.page').then(m => m.AcceuilPage)
   },
@@ -45,8 +49,9 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-  path: 'meeting',
-  loadComponent: () => import('./meeting/meeting.page').then(m => m.MeetingPage),
-  canActivate: [AuthGuard]
-},
+    path: 'meeting',
+    loadComponent: () => import('./meeting/meeting.page').then(m => m.MeetingPage),
+    canActivate: [AuthGuard]
+  },
+  { path: '**', redirectTo: '' },
 ];

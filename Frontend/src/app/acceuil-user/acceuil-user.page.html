@@ -61,4 +61,5 @@
       <div class="footer-row"><span><b>File and YouTube:</b> language is detected automatically. For live voice, choose a language for instant captions.</span><button type="button" class="continue-button" (click)="convertToText()" [disabled]="!hasSource || isLoading || isRecording">{{ isLoading ? 'Creating…' : 'Create transcript' }}</button></div>
     </section>
   </main>
+  <app-footer></app-footer>
 </ion-content>

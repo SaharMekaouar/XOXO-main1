@@ -62,7 +62,7 @@ export class AcceuilPage {
   signup() {
     // Déconnexion de l'utilisateur (peut être améliorée avec JWT plus tard)
 
-    this.router.navigate(['signup']);
+    this.router.navigate(['/signup']);
   }
 
   ngOnInit() {

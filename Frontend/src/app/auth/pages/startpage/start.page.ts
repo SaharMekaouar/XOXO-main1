@@ -15,9 +15,9 @@ export class StartPage implements OnInit {
 
   ngOnInit() {
     if (this.authService.isLoggedIn()) {
-      this.router.navigateByUrl('/acceuil-user');
+      this.router.navigateByUrl('/acceuil-user', { replaceUrl: true });
     } else {
-      this.router.navigateByUrl('/acceuil');
+      this.router.navigateByUrl('/acceuil', { replaceUrl: true });
     }
   }
 }

@@ -1,7 +1,7 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { RouteReuseStrategy, provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
+import { RouteReuseStrategy, provideRouter, withPreloading, PreloadAllModules, withHashLocation } from '@angular/router';
 import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
-import { provideHttpClient, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { provideHttpClient, HTTP_INTERCEPTORS, withInterceptorsFromDi } from '@angular/common/http';
 import { PLATFORM_ID, inject } from '@angular/core';
 import { provideStorage } from '@ionic/storage-angular';
 import { routes } from './app/app.routes';
@@ -44,9 +44,9 @@ const storageProvider = {
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    provideIonicAngular(),
-    provideRouter(routes, withPreloading(PreloadAllModules)),
-    provideHttpClient(),
+    provideIonicAngular({ mode: 'md' }),
+    provideRouter(routes, withHashLocation(), withPreloading(PreloadAllModules)),
+    provideHttpClient(withInterceptorsFromDi()),
     storageProvider,
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     ...appProviders,

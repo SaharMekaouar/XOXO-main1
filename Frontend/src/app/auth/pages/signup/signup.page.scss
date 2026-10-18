@@ -1,66 +1,92 @@
-/* Styling for ion-content */
+/* =====================================================
+   SIGN UP  —  nafes code lel web w mobile
+   ===================================================== */
+
+/* Couleurs en un seul endroit (bech nafes look yokhrej fi kol device,
+   mahouch yetbadel 7asb dark/light mode mte3 téléphone) */
+:host {
+  --field-bg: #1e1e1e;          // badalha l #f4f4f8 ken t7eb inputs fat7in
+  --field-color: #ffffff;       // badalha l #222 ken badalt el bg
+  --field-placeholder: #bdbdbd;
+  --primary: #9893f4;
+  --primary-dark: #5a4db6;
+}
+
 ion-content {
   --background: none;
+  --overflow: auto;
+
   background: url("/assets/blobs.svg") no-repeat center center;
   background-size: cover;
-  display: flex;
-  align-items: center;
-  height: 100vh;
+
+  height: 100%;
+  min-height: 100vh;
+
   position: relative;
+
   padding: 0 5%;
+
+  box-sizing: border-box;
 }
 
+/* =========================
+   SIGN UP CARD
+   ========================= */
 
-/* Styling for the form container */
 .form-container {
-  width: 100%; /* Full width of its parent container */
+  width: 100%;
   max-width: 450px;
-  height: 465px;
+
+  /* min-height 3wedh height + overflow:hidden => el contenu ma yet9assach */
+  min-height: 465px;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+
   background: #fff;
+
   padding: 1.5rem;
+
   border-radius: 30px;
+
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
   text-align: center;
-  max-height: 80vh;
-  overflow: hidden;
-  margin-top: 75px;
-  margin-left: 150px;
-}
 
-@media (max-width: 768px) {
-  .form-container {
-    padding: 1rem;
-    max-width: 90%;
-    max-height: 90vh;
-    margin-top: 20px;
-    width: 120%;
-    margin-left: 20px;
+  box-sizing: border-box;
+
+  /* fou9 el illustration (badalna z-index -1 elli kan yekhfi el 3nasr) */
+  position: relative;
+  z-index: 1;
+
+  /* mobile (default): card fil west */
+  margin: 20px auto 30px;
+
+  /* web: nafes position el 9dima */
+  @media (min-width: 769px) {
+    margin: 75px 0 0 150px;
   }
 }
 
-@media (width: 768px) {
-  .form-container {
-    padding: 1rem;
-    max-width: 90%;
-    max-height: 90vh;
-    margin-top: 40px;
-    width: 80%;
-    opacity: 0.8;
-    margin-left: 20px;
-  }
+/* =========================
+   LOGO + BACK BUTTON
+   (ken el classes 3andek bi esm akhor, badelhom)
+   ========================= */
+
+.form-container img {
+  max-width: 100%;
+  height: auto;
 }
 
-@media (width: 820px) {
-  .form-container {
-    padding: 1rem;
-    max-width: 90%;
-    max-height: 90vh;
-    margin-top: 40px;
-    width: 80%;
-    opacity: 0.8;
-    margin-left: 20px;
-  }
+.form-container .logo {
+  display: inline-block;
+  height: 50px;
+  width: auto;
 }
+
+/* =========================
+   TEXT
+   ========================= */
 
 h2 {
   font-size: 1.5rem;
@@ -69,27 +95,53 @@ h2 {
 
 p {
   margin-bottom: 2rem;
+
   font-size: 1rem;
+
   color: #666;
 }
 
+/* =========================
+   INPUTS
+   ========================= */
 
-/* Centering the ion-item elements */
-ion-item {
-  --border-radius: 10px;
-  --border-color: #ccc;
-  margin-bottom: 1rem;
+.signup-form {
+  width: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%; /* Ensure items fill the width of the container */
+  flex-direction: column;
+  gap: 1rem;
 }
 
-/* Link to login page */
+.text-field {
+  display: block;
+  width: 100%;
+  min-height: 56px;
+  box-sizing: border-box;
+  padding: 16px 15px;
+  border: none;
+  border-radius: 10px;
+  background: var(--field-bg);
+  color: var(--field-color);
+  font-size: 1rem;
+  outline: none;
+}
+
+.text-field::placeholder {
+  color: var(--field-placeholder);
+  opacity: 1;
+}
+
+/* =========================
+   LINKS
+   ========================= */
+
 a {
   color: #6a5acd;
+
   font-weight: bold;
+
   text-decoration: none;
+
   transition: 0.3s;
 
   &:hover {
@@ -98,48 +150,148 @@ a {
   }
 }
 
-/* sign up button*/
-ion-button {
-  --background: #9893f4;
-  --color: white;
-  --border-radius: 10px;
-  font-size: 1.1rem;
-  transition: 0.3s ease-in-out;
-  width: 100%; /* Ensure button spans full width */
+/* =========================
+   BUTTON
+   ========================= */
 
-  &:hover {
-    --background: #5a4db6;
+.signup-button {
+  width: 100%;
+  min-height: 45px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: white;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background: var(--primary-dark);
   }
 
-  &[disabled] {
+  &:disabled {
     opacity: 0.6;
     pointer-events: none;
   }
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 8px;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.google-signin-container {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.google-button {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  border: 1px solid #dadce0;
+  border-radius: 10px;
+  background: #fff;
+  color: #3c4043;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* =========================
+   BACKGROUND ILLUSTRATION
+   ========================= */
+
 .background-image {
   position: fixed;
+
   bottom: 0;
   right: 0;
-  width: 40%; /* Réduire la taille sur les grands écrans */
+
+  width: 40%;
+
   margin-right: 80px;
+
   height: auto;
+
   opacity: 0.8;
-  pointer-events: none; /* Empêche l’image d'interférer avec les clics */
-  z-index: -1;
+
+  pointer-events: none;
+
+  z-index: 0; /* kan -1 => yekhtefi wara el background fil mobile */
+
   mix-blend-mode: multiply;
 }
 
-/* Ajustement pour les écrans de petite taille (mobile) */
+/* =====================================================
+   MOBILE  —  ken ta3dilet sghar (mafamech ta8yir fil design)
+   ===================================================== */
+
+.signup-header {
+  position: relative;
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.back-button {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  padding: 5px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-button img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
 @media (max-width: 768px) {
-  .background-image {
-    width: 85%;
-    opacity: 0.8;
-    margin-right: 35px;
-  }
- 
   ion-content {
     background: url("/assets/blobs-phone.svg") no-repeat center center;
     background-size: cover;
+
+    padding: 20px 15px;
+  }
+
+  .form-container {
+    margin: 15px auto 30px;
+    width: 100%;
+    max-width: 450px;
+  }
+
+  .background-image {
+    display: none;
   }
 }

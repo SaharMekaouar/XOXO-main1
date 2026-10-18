@@ -32,6 +32,27 @@
  * https://ionicframework.com/docs/theming/dark-mode
  */
 
+/* Keep the designed light UI on phones (system dark mode hid login/signup). */
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+/* @import '@ionic/angular/css/palettes/dark.system.css'; */
+
+html, body, ion-app, ion-router-outlet {
+  height: 100%;
+}
+
+ion-router-outlet {
+  display: flex;
+  flex-direction: column;
+}
+
+ion-content {
+  --background: #eef2f7;
+}
+
+/* Tab bar is mobile-only. Keep this global so history/help/view match home. */
+@media (min-width: 901px) {
+  ion-footer.mobile-only {
+    display: none !important;
+  }
+}

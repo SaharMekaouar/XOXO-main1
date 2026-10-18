@@ -1,3 +1,19 @@
+/* Bottom tab bar: mobile only. Desktop uses the top navbar. */
+:host {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  :host {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2000;
+  }
+}
+
 /* Style global de la barre */
 $primary-color: #6a5acd; 
 ion-toolbar {

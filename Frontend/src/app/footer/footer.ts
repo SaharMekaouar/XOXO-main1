@@ -29,7 +29,7 @@ export class Footer implements OnInit {
     if (fileInput) {
       fileInput.value = ''; 
     }
-    this.router.navigate(['/acceuil']);
+    this.router.navigate([this.isAuthenticated ? '/acceuil-user' : '/acceuil']);
   }
   ngOnInit() {
     this.isAuthenticated = this.authService.isLoggedIn();

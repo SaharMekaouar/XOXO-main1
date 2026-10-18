@@ -20,9 +20,9 @@ import {
   animate,
   transition,
 } from '@angular/animations';
-import jsPDF from 'jspdf';
 import { Navbar } from "../navbar/navbar";
-import { Filesystem, Directory,Encoding  } from '@capacitor/filesystem';
+import { downloadTextAsPdf } from '../utils/pdf-download';
+import { getApiUrl } from '../core/api.config';
 interface Clip {
   id: string;
   title: string;
@@ -810,7 +810,7 @@ sendEmail(to: string, subject: string, text: string) {
     text
   };
 
-  this.http.post('http://localhost:3000/mail/send', payload).subscribe({
+  this.http.post(getApiUrl() + '/mail/send', payload).subscribe({
     next: () => {
       this.showToast(' Mail sent successfully !');
     },
@@ -852,7 +852,7 @@ openModal() {
     text: this.translatedText || this.transcribedText,
   };
 
-  this.http.post<any>('http://localhost:3000/text/generate-url', payload).subscribe(
+  this.http.post<any>(getApiUrl() + '/text/generate-url', payload).subscribe(
     (res) => {
       const shareableUrl = res.url;
 
@@ -1028,43 +1028,12 @@ selectAction(action: string, clip?: any) {
 }
 
 async generatePDF(clip: any) {
-  const doc = new jsPDF();
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text('Transcription', 105, 15, { align: 'center' });
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(12);
-
-  const marginLeft = 10;
-  const marginTop = 30;
-  const pageWidth = doc.internal.pageSize.width - 2 * marginLeft;
-
-  const content = clip.content || '';
-  const splitText = doc.splitTextToSize(content, pageWidth);
-  doc.text(splitText, marginLeft, marginTop);
-
-  
-  const now = new Date();
-  const timestamp = now.getFullYear().toString() + '.'+
-                    (now.getMonth() + 1).toString().padStart(2, '0') +'.'+
-                    now.getDate().toString().padStart(2, '0') ;
-
-  const fileName = `transcription_${timestamp}.pdf`;
-
-  const base64Data = doc.output('dataurlstring').split(',')[1];
-
   try {
-    await Filesystem.writeFile({
-      path: fileName,
-      data: base64Data,
-      directory: Directory.Documents,
-    });
-    alert(`PDF saved: ${fileName}`);
+    const safeTitle = (clip.title || 'recapify').replace(/[^\w-]+/g, '_').slice(0, 50);
+    await downloadTextAsPdf(clip.content || '', `${safeTitle || 'recapify'}-${Date.now()}.pdf`, clip.title || 'Transcription');
   } catch (e) {
-    //console.error('PDF save error:', e);
-    alert('Error saving PDF.');
+    console.error('PDF download error:', e);
+    alert('Error downloading PDF.');
   }
 }
 

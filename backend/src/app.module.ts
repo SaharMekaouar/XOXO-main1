@@ -18,9 +18,10 @@ import { ConfigModule } from '@nestjs/config';
 import { TextModule } from './text/text.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CategoryModule } from './category/category.module';
-import { MailerModule } from '@nestjs-modules/mailer';
 import { MailModule } from './mail/mail.module';
 import { TranslationModule } from './translate/translate.module';
+import { VerificationModule } from './verification/verification.module';
+import { VerificationController } from './verification/verification.controller';
 @Module({
   imports: [PrismaModule,
     ThrottlerModule.forRoot([
@@ -29,30 +30,18 @@ import { TranslationModule } from './translate/translate.module';
       limit: 20,
     },
   ]),
-  ConfigModule.forRoot({isGlobal: true,}),MailerModule.forRoot({
-    transport: {
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    },
-    defaults: {
-      from: '"IA Transcripteur" <tonemail@gmail.com>',
-    },
-  }),
+  ConfigModule.forRoot({isGlobal: true,}),
   MailModule,
     MongooseModule.forRoot(process.env.DATABASE_URL!),
-    TextModule, 
+    TextModule,
     AuthModule,
     AIModule,
     SummarizeModule,
     SavedTextModule,
     CategoryModule,
-  TranslationModule] ,
-  controllers: [AppController, AuthController,SummarizeController],
+  TranslationModule,
+  VerificationModule] ,
+  controllers: [AppController, AuthController,SummarizeController, VerificationController],
   providers: [AppService,PrismaService,SummarizeService, {
     provide: APP_GUARD,
     useClass: ThrottlerGuard,
