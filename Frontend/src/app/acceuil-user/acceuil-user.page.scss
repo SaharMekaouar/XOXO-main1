@@ -920,6 +920,42 @@ app-navbar {
   }
 }
 
+/* Native phone layout: keep the first screen compact and let the source page scroll. */
+@media (max-width: 760px) {
+  :host-context(body.native-app) .workspace {
+    min-height: auto;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-top: 76px;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+  }
+
+  :host-context(body.native-app) .source-card {
+    min-height: 126px;
+  }
+
+  :host-context(body.native-app) .youtube-field {
+    align-items: stretch;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  :host-context(body.native-app) .youtube-field input {
+    flex: 1 1 auto;
+    width: 0;
+    min-height: 44px;
+  }
+
+  :host-context(body.native-app) .youtube-field button {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 112px;
+    min-height: 44px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+}
+
 
 /* =========================================================
    VERY SMALL PHONES

@@ -15,6 +15,9 @@ import { GoogleSignInService } from './auth/services/google-signin.service';
 })
 export class AppComponent {
   constructor(googleSignIn: GoogleSignInService) {
+    if (Capacitor.isNativePlatform()) {
+      document.body.classList.add('native-app');
+    }
     probeAndCacheApiUrl().catch(() => undefined);
     googleSignIn.init().catch(() => undefined);
     if (Capacitor.isNativePlatform()) {

@@ -5,6 +5,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { IonicModule } from '@ionic/angular';
 import { ActivatedRoute } from '@angular/router';
 import { io, Socket } from 'socket.io-client';
+import { Capacitor } from '@capacitor/core';
+import { getApiUrl } from '../core/api.config';
 
 interface DialogueTurn {
   id: string;
@@ -27,6 +29,7 @@ interface GuestMeeting {
   styleUrls: ['./meeting-guest.page.scss'],
 })
 export class MeetingGuestPage implements OnInit, OnDestroy {
+  private readonly apiBaseUrl = Capacitor.isNativePlatform() ? getApiUrl() : 'http://localhost:3000';
   token: string | null = null;
   isLoading = true;
   errorMessage = '';
@@ -78,7 +81,7 @@ export class MeetingGuestPage implements OnInit, OnDestroy {
   }
 
   private loadMeeting(): void {
-    this.http.get<GuestMeeting>('http://localhost:3000/meeting/guest/me', { headers: this.authHeaders() }).subscribe({
+    this.http.get<GuestMeeting>(`${this.apiBaseUrl}/meeting/guest/me`, { headers: this.authHeaders() }).subscribe({
       next: (info) => {
         this.meetingInfo = info;
         this.isLoading = false;
@@ -93,7 +96,7 @@ export class MeetingGuestPage implements OnInit, OnDestroy {
   }
 
   private connectSocket(meetingId: string): void {
-    this.socket = io('http://localhost:3000/meeting', { query: { meetingId } });
+    this.socket = io(`${this.apiBaseUrl}/meeting`, { query: { meetingId } });
 
     this.socket.on('new-turn', (turn: DialogueTurn) => {
       if (!this.dialogue.some(t => t.id === turn.id)) this.dialogue.push(turn);
@@ -109,7 +112,7 @@ export class MeetingGuestPage implements OnInit, OnDestroy {
   }
 
   private loadPastTurns(): void {
-    this.http.get<DialogueTurn[]>('http://localhost:3000/meeting/guest/turns', { headers: this.authHeaders() }).subscribe({
+    this.http.get<DialogueTurn[]>(`${this.apiBaseUrl}/meeting/guest/turns`, { headers: this.authHeaders() }).subscribe({
       next: (turns) => { this.dialogue = turns; },
       error: (error) => console.error('Failed to load past turns:', error),
     });
@@ -165,7 +168,10 @@ export class MeetingGuestPage implements OnInit, OnDestroy {
       return;
     }
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioConstraints: MediaStreamConstraints = Capacitor.isNativePlatform()
+        ? { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }
+        : { audio: true };
+      this.stream = await navigator.mediaDevices.getUserMedia(audioConstraints);
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
       this.recorder = mimeType ? new MediaRecorder(this.stream, { mimeType }) : new MediaRecorder(this.stream);
       this.recordedChunks = [];
@@ -203,7 +209,7 @@ export class MeetingGuestPage implements OnInit, OnDestroy {
     const formData = new FormData();
     formData.append('file', audio, audio.name);
     formData.append('language', this.meetingInfo!.participant.lang);
-    this.http.post<{ text: string }>('http://localhost:3000/meeting/guest/transcribe', formData, { headers }).subscribe({
+    this.http.post<{ text: string }>(`${this.apiBaseUrl}/meeting/guest/transcribe`, formData, { headers }).subscribe({
       next: ({ text }) => this.submitTurn(text),
       error: (error) => {
         console.error(error);
@@ -222,7 +228,7 @@ export class MeetingGuestPage implements OnInit, OnDestroy {
       return;
     }
     const headers = this.authHeaders();
-    this.http.post('http://localhost:3000/meeting/guest/turns', {
+    this.http.post(`${this.apiBaseUrl}/meeting/guest/turns`, {
       speakerName: this.meetingInfo.participant.name,
       originalLang: this.meetingInfo.participant.lang,
       originalText: trimmed,

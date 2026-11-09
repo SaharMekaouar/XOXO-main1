@@ -23,6 +23,8 @@ export class ResetPasswordPage {
   token = '';
   showPassword = false;
   showConfirmPassword = false;
+  isSubmitting = false;
+  errorMessage = '';
 
   constructor(private authService: AuthService, private route: ActivatedRoute, private router: Router) {
 
@@ -31,7 +33,9 @@ export class ResetPasswordPage {
     this.route.queryParams.subscribe(params => {
       this.email = params['email'];
       this.token = params['token'];
-      console.log('📩 Email et Token récupérés:', this.email, this.token);
+      if (!this.email || !this.token) {
+        this.errorMessage = 'This reset link is incomplete. Request a new password reset email.';
+      }
     });
   }
 
@@ -44,16 +48,22 @@ export class ResetPasswordPage {
   }
 
   resetPassword() {
-    if (!this.email || !this.newPassword || !this.confirmPassword) {
-      alert('Please fill in all fields');
+    if (!this.email || !this.token) {
+      this.errorMessage = 'This reset link is invalid. Request a new password reset email.';
+      return;
+    }
+    if (!this.newPassword || !this.confirmPassword) {
+      this.errorMessage = 'Please fill in both password fields.';
       return;
     }
 
     if (this.newPassword !== this.confirmPassword) {
-      alert('Passwords do not match');
+      this.errorMessage = 'Passwords do not match.';
       return;
     }
 
+    this.isSubmitting = true;
+    this.errorMessage = '';
     const data = { email: this.email, token: this.token, newPassword: this.newPassword };
     this.authService.resetPassword(data).subscribe({
       next: () => {
@@ -61,8 +71,9 @@ export class ResetPasswordPage {
         this.router.navigate(['/login']);
       },
       error: (err) => {
+        this.isSubmitting = false;
         console.error('Reset password error:', err);
-        //alert('Error: Unable to reset password. Please try again.');
+        this.errorMessage = err?.error?.message || 'Unable to reset password. The link may have expired; request a new one.';
       },
     });
   }

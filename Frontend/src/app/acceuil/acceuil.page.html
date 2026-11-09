@@ -1,3 +1,4 @@
+<div *ngIf="isNative" class="mobile-home-navbar"><app-navbar></app-navbar></div>
 <ion-content class="acceuil-page">
   <!-- Hero Section with Logo on Top -->
   <section class="hero">
@@ -12,6 +13,13 @@
 
     <div class="hero-image" >
       <img src="assets/rrr.png" alt="Hero Illustration" />
+    </div>
+    <div class="native-home-cta" *ngIf="isNative">
+      <button type="button" (click)="isAuthenticated ? Homeuser() : login()">
+        {{ isAuthenticated ? 'Open your workspace' : 'Start transcribing' }}
+        <ion-icon name="arrow-forward-outline"></ion-icon>
+      </button>
+      <span>Voice, files, YouTube and meeting notes in one place.</span>
     </div>
         <div class="auth-buttons" >
       <button class="log-in" (click)="login()">LOG IN</button>
@@ -77,3 +85,4 @@
     <p>© 2026 Recapify. All rights reserved.</p>
   </footer>
 </ion-content>
+<app-footer *ngIf="isNative"></app-footer>

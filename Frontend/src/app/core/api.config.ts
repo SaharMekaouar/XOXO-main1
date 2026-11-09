@@ -42,14 +42,25 @@ export function getNativeApiCandidates(): string[] {
 }
 
 export function getApiUrl(): string {
+  if (Capacitor.isNativePlatform()) {
+    const candidates = getNativeApiCandidates();
+    const saved = typeof localStorage !== 'undefined'
+      ? localStorage.getItem(STORAGE_KEY)
+      : null;
+    const normalizedSaved = saved ? stripSlash(saved) : null;
+    // A phone may retain an API address from an older APK. Only reuse it if it
+    // is still one of the addresses configured for this native build.
+    if (normalizedSaved && candidates.includes(normalizedSaved)) {
+      return normalizedSaved;
+    }
+    return candidates[0] || stripSlash(environment.lanApiUrl);
+  }
+
   if (typeof localStorage !== 'undefined') {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       return stripSlash(saved);
     }
-  }
-  if (Capacitor.isNativePlatform()) {
-    return stripSlash(isEmulator() ? environment.emulatorApiUrl : environment.lanApiUrl);
   }
   const fromHost = lanHostApiUrl();
   if (fromHost) {
@@ -82,6 +93,33 @@ async function isReachable(base: string): Promise<boolean> {
 }
 
 export async function probeAndCacheApiUrl(): Promise<string> {
+  if (Capacitor.isNativePlatform()) {
+    const candidates = getNativeApiCandidates();
+    const saved = typeof localStorage !== 'undefined'
+      ? localStorage.getItem(STORAGE_KEY)
+      : null;
+    const normalizedSaved = saved ? stripSlash(saved) : null;
+
+    if (
+      normalizedSaved &&
+      candidates.includes(normalizedSaved) &&
+      (await isReachable(normalizedSaved))
+    ) {
+      return normalizedSaved;
+    }
+
+    for (const base of candidates) {
+      if (await isReachable(base)) {
+        setApiUrl(base);
+        return base;
+      }
+    }
+
+    const fallback = candidates[0] || getApiUrl();
+    setApiUrl(fallback);
+    return fallback;
+  }
+
   const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
   const isLocalWeb = !Capacitor.isNativePlatform() && (host === 'localhost' || host === '127.0.0.1');
   if (isLocalWeb) {

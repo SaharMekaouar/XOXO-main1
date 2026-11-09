@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth/services/auth.service';
+import { Capacitor } from '@capacitor/core';
 @Component({
   selector: 'app-footer',
   templateUrl: './footer.html',
@@ -12,6 +13,7 @@ import { AuthService } from '../auth/services/auth.service';
   imports: [IonicModule, CommonModule, FormsModule]
 })
 export class Footer implements OnInit {
+  readonly isNative = Capacitor.isNativePlatform();
   uploadedFileName: string = '';
   uploadedFile: File | null = null;
   mediaUrl: string = '';
@@ -20,6 +22,14 @@ export class Footer implements OnInit {
   showLogout = false; 
 
   constructor( private router: Router, private authService: AuthService) {} 
+
+  get activeTab(): 'history' | 'home' | 'help' | null {
+    const path = this.router.url.split('?')[0];
+    if (path === '/history') return 'history';
+    if (path === '/contact') return 'help';
+    if (path === '/acceuil' || path === '/acceuil-user' || path === '/view') return 'home';
+    return null;
+  }
 
   Home() {
     this.uploadedFile = null;

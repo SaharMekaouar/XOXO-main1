@@ -1,69 +1,81 @@
+
 import { Routes } from '@angular/router';
 import { AuthGuard } from './auth/auth.guard';
-import { StartPage } from './auth/pages/startpage/start.page'; 
+import { StartPage } from './auth/pages/startpage/start.page';
 
 export const routes: Routes = [
-  { path: '', component: StartPage }, 
+  { path: '', component: StartPage },
 
   {
     path: 'login',
-    loadComponent: () => import('./auth/pages/login/login.page').then(m => m.LoginPage)
+    loadComponent: () =>
+      import('./auth/pages/login/login.page').then(m => m.LoginPage)
   },
   {
     path: 'signup',
-    loadComponent: () => import('./auth/pages/signup/signup.page').then(m => m.SignupPage)
+    loadComponent: () =>
+      import('./auth/pages/signup/signup.page').then(m => m.SignupPage)
   },
   {
     path: 'forgot-password',
-    loadComponent: () => import('./auth/pages/forgot-password/forgot-password.page').then(m => m.ForgotPasswordPage)
+    loadComponent: () =>
+      import('./auth/pages/forgot-password/forgot-password.page')
+        .then(m => m.ForgotPasswordPage)
   },
   {
     path: 'reset-password',
-    loadComponent: () => import('./auth/pages/reset-password/reset-password.page').then(m => m.ResetPasswordPage)
+    loadComponent: () =>
+      import('./auth/pages/reset-password/reset-password.page')
+        .then(m => m.ResetPasswordPage)
   },
   {
     path: 'verification',
-    loadComponent: () => import('./auth/pages/verification/verification.page').then(m => m.VerificationPage)
+    loadComponent: () =>
+      import('./auth/pages/verification/verification.page')
+        .then(m => m.VerificationPage)
   },
   {
     path: 'acceuil',
-    loadComponent: () => import('./acceuil/acceuil.page').then(m => m.AcceuilPage)
+    loadComponent: () =>
+      import('./acceuil/acceuil.page').then(m => m.AcceuilPage)
   },
   {
     path: 'acceuil-user',
-    loadComponent: () => import('./acceuil-user/acceuil-user.page').then(m => m.AcceuilUserPage),
+    loadComponent: () =>
+      import('./acceuil-user/acceuil-user.page')
+        .then(m => m.AcceuilUserPage),
     canActivate: [AuthGuard]
   },
   {
     path: 'history',
-    loadComponent: () => import('./history/history.page').then(m => m.HistoryPage),
+    loadComponent: () =>
+      import('./history/history.page').then(m => m.HistoryPage),
     canActivate: [AuthGuard]
   },
   {
     path: 'contact',
-    loadComponent: () => import('./contact/contact.page').then(m => m.ContactPage)
+    loadComponent: () =>
+      import('./contact/contact.page').then(m => m.ContactPage)
   },
   {
     path: 'view',
-    loadComponent: () => import('./view/view.page').then(m => m.ViewPage),
+    loadComponent: () =>
+      import('./view/view.page').then(m => m.ViewPage),
     canActivate: [AuthGuard]
   },
   {
-<<<<<<< HEAD
     path: 'meeting',
-    loadComponent: () => import('./meeting/meeting.page').then(m => m.MeetingPage),
+    loadComponent: () =>
+      import('./meeting/meeting.page').then(m => m.MeetingPage),
     canActivate: [AuthGuard]
   },
-  { path: '**', redirectTo: '' },
+  {
+    path: 'meeting-guest',
+    loadComponent: () =>
+      import('./meeting-guest/meeting-guest.page')
+        .then(m => m.MeetingGuestPage)
+  },
+
+  // Toujours garder la route wildcard à la fin
+  { path: '**', redirectTo: '' }
 ];
-=======
-  path: 'meeting',
-  loadComponent: () => import('./meeting/meeting.page').then(m => m.MeetingPage),
-  canActivate: [AuthGuard]
-},
-{
-  path: 'meeting-guest',
-  loadComponent: () => import('./meeting-guest/meeting-guest.page').then(m => m.MeetingGuestPage),
-},
-];
->>>>>>> 9aa3b9d919548cd5d351ab4a0f368c8989a44234

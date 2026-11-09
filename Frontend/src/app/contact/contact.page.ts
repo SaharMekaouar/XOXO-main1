@@ -7,14 +7,17 @@ import { AlertController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth/services/auth.service';
 import { Navbar } from "../navbar/navbar";
+import { Footer } from '../footer/footer';
+import { Capacitor } from '@capacitor/core';
 @Component({
   selector: 'app-contact',
   templateUrl: './contact.page.html',
   styleUrls: ['./contact.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule, Navbar]
+  imports: [IonicModule, CommonModule, FormsModule, Navbar, Footer]
 })
 export class ContactPage implements OnInit {
+  readonly isNative = Capacitor.isNativePlatform();
 
 
 

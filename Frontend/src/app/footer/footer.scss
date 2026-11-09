@@ -24,6 +24,10 @@ ion-toolbar {
   --padding-bottom: 10px;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
 }
+
+:host-context(body.native-app) ion-footer {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
 ion-icon {
   color:$primary-color;
   font-size: 24px;

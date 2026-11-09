@@ -11,6 +11,9 @@ import { Navbar } from '../navbar/navbar';
 import { AuthService } from '../auth/services/auth.service';
 import { SavedTextService } from '../auth/services/saved-text.service';
 import { PopoverMenuComponent } from '../components/popover-menu.component/popover-menu.component';
+import { Capacitor } from '@capacitor/core';
+import { getApiUrl } from '../core/api.config';
+import { copyTextToClipboard, downloadTextFile } from '../utils/mobile-file-actions';
 
 interface DialogueTurn {
   id: string;
@@ -38,6 +41,7 @@ interface RemoteParticipant {
   styleUrls: ['./meeting.page.scss'],
 })
 export class MeetingPage implements OnDestroy {
+  private readonly apiBaseUrl = Capacitor.isNativePlatform() ? getApiUrl() : 'http://localhost:3000';
   readonly languages = [
     { code: 'ar', label: 'العربية / التونسي' },
     { code: 'fr', label: 'Français' },
@@ -122,7 +126,7 @@ export class MeetingPage implements OnDestroy {
     const headers = this.authHeaders();
     try {
       const meeting = await firstValueFrom(
-        this.http.post<{ id: string }>('http://localhost:3000/meeting', { mode: 'remote', lang: this.adminLang }, { headers }),
+        this.http.post<{ id: string }>(`${this.apiBaseUrl}/meeting`, { mode: 'remote', lang: this.adminLang }, { headers }),
       );
       this.remoteMeetingId = meeting.id;
       this.connectSocket(meeting.id);
@@ -134,7 +138,7 @@ export class MeetingPage implements OnDestroy {
   }
 
   private connectSocket(meetingId: string): void {
-    this.socket = io('http://localhost:3000/meeting', { query: { meetingId } });
+    this.socket = io(`${this.apiBaseUrl}/meeting`, { query: { meetingId } });
 
     this.socket.on('new-turn', (turn: DialogueTurn) => {
       if (!this.dialogue.some(t => t.id === turn.id)) {
@@ -160,7 +164,7 @@ export class MeetingPage implements OnDestroy {
     const headers = this.authHeaders();
     try {
       const turns = await firstValueFrom(
-        this.http.get<DialogueTurn[]>(`http://localhost:3000/meeting/${this.remoteMeetingId}/turns`, { headers }),
+        this.http.get<DialogueTurn[]>(`${this.apiBaseUrl}/meeting/${this.remoteMeetingId}/turns`, { headers }),
       );
       this.dialogue = turns;
     } catch (error) {
@@ -200,7 +204,7 @@ export class MeetingPage implements OnDestroy {
     try {
       await firstValueFrom(
         this.http.post(
-          `http://localhost:3000/meeting/${this.remoteMeetingId}/invite`,
+          `${this.apiBaseUrl}/meeting/${this.remoteMeetingId}/invite`,
           { name: this.inviteName.trim(), email: this.inviteEmail.trim(), lang: this.inviteLang },
           { headers },
         ),
@@ -222,7 +226,7 @@ export class MeetingPage implements OnDestroy {
     const headers = this.authHeaders();
     try {
       this.remoteParticipants = await firstValueFrom(
-        this.http.get<RemoteParticipant[]>(`http://localhost:3000/meeting/${this.remoteMeetingId}/participants`, { headers }),
+        this.http.get<RemoteParticipant[]>(`${this.apiBaseUrl}/meeting/${this.remoteMeetingId}/participants`, { headers }),
       );
     } catch (error) {
       console.error('Failed to load participants:', error);
@@ -234,7 +238,7 @@ export class MeetingPage implements OnDestroy {
     const headers = this.authHeaders();
     try {
       await firstValueFrom(
-        this.http.delete(`http://localhost:3000/meeting/${this.remoteMeetingId}/participants/${participantId}`, { headers }),
+        this.http.delete(`${this.apiBaseUrl}/meeting/${this.remoteMeetingId}/participants/${participantId}`, { headers }),
       );
       await this.refreshParticipants();
     } catch (error) {
@@ -264,7 +268,10 @@ export class MeetingPage implements OnDestroy {
       return;
     }
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioConstraints: MediaStreamConstraints = Capacitor.isNativePlatform()
+        ? { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }
+        : { audio: true };
+      this.stream = await navigator.mediaDevices.getUserMedia(audioConstraints);
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
         : '';
@@ -306,7 +313,7 @@ export class MeetingPage implements OnDestroy {
     formData.append('file', audio, audio.name);
     formData.append('language', this.adminLang);
 
-    this.http.post<{ text: string }>('http://localhost:3000/ai/transcribe', formData, { headers }).subscribe({
+    this.http.post<{ text: string }>(`${this.apiBaseUrl}/ai/transcribe`, formData, { headers }).subscribe({
       next: ({ text }) => this.translateAndSendRemoteTurn(text, this.adminName, this.adminLang, headers),
       error: (error) => this.handleError(error),
     });
@@ -325,7 +332,7 @@ export class MeetingPage implements OnDestroy {
 
     const finalize = () => {
       if (!this.remoteMeetingId) return;
-      this.http.post(`http://localhost:3000/meeting/${this.remoteMeetingId}/turns`, {
+      this.http.post(`${this.apiBaseUrl}/meeting/${this.remoteMeetingId}/turns`, {
         speakerName, originalLang: speakerLang, originalText: trimmed, translations,
       }, { headers }).subscribe({
         next: () => { this.isProcessing = false; this.releaseSpeak(); },
@@ -336,7 +343,7 @@ export class MeetingPage implements OnDestroy {
     if (!targetLangs.length) { finalize(); return; }
     let remaining = targetLangs.length;
     targetLangs.forEach((tgtLang) => {
-      this.http.post<{ translation: string }>('http://localhost:3000/translate', {
+      this.http.post<{ translation: string }>(`${this.apiBaseUrl}/translate`, {
         text: trimmed, srcLang: speakerLang, tgtLang,
       }, { headers }).subscribe({
         next: ({ translation }) => { translations[tgtLang] = translation; remaining -= 1; if (remaining === 0) finalize(); },
@@ -418,23 +425,46 @@ export class MeetingPage implements OnDestroy {
     }
   }
 
-  private downloadDialogue(): void {
-    const blob = new Blob([this.dialogueAsText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `meeting-${Date.now()}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  private async downloadDialogue(): Promise<void> {
+    if (!Capacitor.isNativePlatform()) {
+      const blob = new Blob([this.dialogueAsText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `meeting-${Date.now()}.txt`;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    try {
+      await downloadTextFile(`meeting-${Date.now()}.txt`, this.dialogueAsText);
+      const toast = await this.toastCtrl.create({ message: 'Dialogue saved.', duration: 2000, color: 'success' });
+      await toast.present();
+    } catch (error) {
+      console.error('Meeting download failed:', error);
+      const toast = await this.toastCtrl.create({ message: 'Unable to save the dialogue.', duration: 2500, color: 'danger' });
+      await toast.present();
+    }
   }
 
   private shareDialogue(): void {
-    this.http.post<any>('http://localhost:3000/text/generate-url', {
+    this.http.post<any>(`${this.apiBaseUrl}/text/generate-url`, {
       type: 'meeting', text: this.dialogueAsText,
     }).subscribe({
       next: (res) => {
-        navigator.clipboard.writeText(res.url);
-        this.toastCtrl.create({ message: 'Lien copié !', duration: 2000 }).then(t => t.present());
+        const copy = Capacitor.isNativePlatform()
+          ? copyTextToClipboard(res.url)
+          : navigator.clipboard.writeText(res.url);
+        copy.then(() => {
+          this.toastCtrl.create({ message: 'Lien copié !', duration: 2000 }).then(t => t.present());
+        }).catch(async (error) => {
+          console.error('Meeting link copy failed:', error);
+          if (Capacitor.isNativePlatform()) {
+            const toast = await this.toastCtrl.create({ message: 'Impossible de copier le lien.', duration: 2000, color: 'danger' });
+            await toast.present();
+          }
+        });
       },
       error: () => {
         this.toastCtrl.create({ message: 'Impossible de générer le lien.', duration: 2000, color: 'danger' }).then(t => t.present());

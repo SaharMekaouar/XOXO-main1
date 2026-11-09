@@ -10,6 +10,9 @@ import { Observable, Subscribable } from 'rxjs';
 import { AlertController } from '@ionic/angular';
 import { ModalController } from '@ionic/angular';
 import { lastValueFrom } from 'rxjs';
+import { Navbar } from '../navbar/navbar';
+import { Footer } from '../footer/footer';
+import { Capacitor } from '@capacitor/core';
 
 
 @Component({
@@ -19,11 +22,14 @@ import { lastValueFrom } from 'rxjs';
     CommonModule,
     FormsModule,
     IonicModule,
+    Navbar,
+    Footer,
 ],
   templateUrl: './acceuil.page.html',
   styleUrls: ['./acceuil.page.scss'],
 })
 export class AcceuilPage {
+  readonly isNative = Capacitor.isNativePlatform();
   uploadedFileName: string = '';
   transcribedText: string = '';
   uploadedFile: File | null = null;

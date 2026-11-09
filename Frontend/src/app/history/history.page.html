@@ -3,6 +3,12 @@
   
   <ion-content class="history-page">
 
+    <header class="history-mobile-heading" *ngIf="isNative">
+      <p>RECAPIFY · LIBRARY</p>
+      <h1>My content</h1>
+      <span>{{ filteredClips.length }} saved {{ filteredClips.length === 1 ? 'item' : 'items' }}</span>
+    </header>
+
      <div class="search-container">
       <ion-searchbar
         [(ngModel)]="searchTerm"
@@ -26,6 +32,11 @@
 
       <ion-chip (click)="resetFilters()" [outline]="selectedCategory !== null || showOnlyPinned" style="color: #9893f4;">
         All
+      </ion-chip>
+
+      <ion-chip *ngIf="isNative" [outline]="!showOnlyPinned" [class.selected]="showOnlyPinned" (click)="togglePinnedFilter()" class="mobile-filter-chip">
+        <ion-icon [name]="showOnlyPinned ? 'pin' : 'pin-outline'"></ion-icon>
+        Pinned
       </ion-chip>
 
 
@@ -154,6 +165,7 @@
             [color]="clip.isFavorite ? 'danger' : 'medium'"
             style="font-size: 24px;">
           </ion-icon>
+          <ion-label *ngIf="isNative" class="mobile-action-label">{{ clip.isFavorite ? 'Favorited' : 'Favorite' }}</ion-label>
         </ion-button>
 
         <ion-button fill="clear" size="small" (click)="togglePin(clip); $event.stopPropagation()">
@@ -162,12 +174,14 @@
             [color]="clip.isPinned ? 'purple' : 'medium'"
             style="font-size: 24px;">
           </ion-icon>
+          <ion-label *ngIf="isNative" class="mobile-action-label">{{ clip.isPinned ? 'Pinned' : 'Pin' }}</ion-label>
         </ion-button>
 
         <!-- Bouton principal "Share" -->
 <!-- Bouton principal "Share" -->
-       <ion-button fill="clear" (click)="openEmailModal(clip.content); $event.stopPropagation()" style="display: flex; align-items: center;">
+       <ion-button fill="clear" (click)="isNative ? shareTextOrGenerateLink(clip.content) : openEmailModal(clip.content); $event.stopPropagation()" style="display: flex; align-items: center;">
   <ion-icon name="share-social-outline" style="font-size: 24px;"></ion-icon>
+  <ion-label *ngIf="isNative" class="mobile-action-label">Share</ion-label>
 
 </ion-button>
 
@@ -177,11 +191,13 @@
 
         <ion-button fill="clear" size="small" (click)="selectAction('download', clip); $event.stopPropagation()">
           <ion-icon name="download-outline" style="font-size: 24px; color: #9893f4;"></ion-icon>
+          <ion-label *ngIf="isNative" class="mobile-action-label">PDF</ion-label>
         </ion-button>
 
 
         <ion-button fill="clear" size="small" color="danger" (click)="deleteText(clip.id, $event)">
           <ion-icon name="trash" style="font-size: 24px;"></ion-icon>
+          <ion-label *ngIf="isNative" class="mobile-action-label">Delete</ion-label>
         </ion-button>
       </div>
     </ion-footer>
@@ -224,41 +240,21 @@
     <p>© 2026 Recapify Inc. All rights reserved.</p>
   </footer>
 
-  <ion-footer class ="mobile-only">
+  <ion-footer class="mobile-only" *ngIf="!isNative">
     <ion-toolbar>
       <ion-buttons class="footer-buttons">
-        <!-- Bouton History -->
-        <ion-button 
-          class="footer-button" 
-          fill="clear"
-          (click)="History()">
-          <div class="button-content">
-            <ion-icon name="document-text-outline"></ion-icon>
-            <ion-label class="footer-label">My content</ion-label>
-          </div>
+        <ion-button class="footer-button" fill="clear" (click)="History()">
+          <div class="button-content"><ion-icon name="document-text-outline"></ion-icon><ion-label class="footer-label">My content</ion-label></div>
         </ion-button>
-        <!-- Bouton Home -->
-        <ion-button 
-          class="footer-button" 
-          fill="clear"
-          (click)="isAuthenticated ? Homeuser() : Home()">
-          <div class="button-content">
-            <ion-icon name="home-outline"></ion-icon>
-            <ion-label class="footer-label">Home</ion-label>
-          </div>
+        <ion-button class="footer-button" fill="clear" (click)="isAuthenticated ? Homeuser() : Home()">
+          <div class="button-content"><ion-icon name="home-outline"></ion-icon><ion-label class="footer-label">Home</ion-label></div>
         </ion-button>
-        <!-- Bouton Help -->
-        <ion-button
-          class="footer-button" 
-          fill="clear"
-          (click)="Contact()">
-          <div class="button-content">
-            <ion-icon name="help-circle-outline"></ion-icon>
-            <ion-label class="footer-label">Help</ion-label>
-          </div>
+        <ion-button class="footer-button" fill="clear" (click)="Contact()">
+          <div class="button-content"><ion-icon name="help-circle-outline"></ion-icon><ion-label class="footer-label">Help</ion-label></div>
         </ion-button>
       </ion-buttons>
     </ion-toolbar>
   </ion-footer>
+  <app-footer *ngIf="isNative"></app-footer>
 </div>
 

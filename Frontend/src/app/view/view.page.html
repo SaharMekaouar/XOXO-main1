@@ -18,6 +18,17 @@
         </div>
       </ion-card-header>
 
+      <div class="mobile-result-actions" *ngIf="isNative">
+        <ion-button class="result-action summarize-action" (click)="summarizeAndReset(transcribedText, 'basic')" [disabled]="isLoading || !transcribedText">
+          <ion-icon name="sparkles-outline" slot="start"></ion-icon>
+          Summarize
+        </ion-button>
+        <ion-button class="result-action copy-action" (click)="copyText()" [disabled]="!transcribedText">
+          <ion-icon name="copy-outline" slot="start"></ion-icon>
+          Copy
+        </ion-button>
+      </div>
+
       <ion-card-content class="text-zone">
         <div class="textarea-wrapper">
           <ion-textarea
@@ -28,7 +39,7 @@
             (ionInput)="adjustTextareaHeight()"
           ></ion-textarea>
           <ion-text *ngIf="!isEditing">
-            {{ translatedText ? translatedText : transcribedText }}
+            <span [attr.dir]="isNative ? 'auto' : null">{{ translatedText ? translatedText : transcribedText }}</span>
           </ion-text>
         </div>
       </ion-card-content>
@@ -42,27 +53,19 @@
 </footer>
 
 <!-- ✅ Mobile Footer (sticky using ion-footer) -->
-<ion-footer class="mobile-only">
+<ion-footer class="mobile-only" *ngIf="!isNative">
   <ion-toolbar>
     <ion-buttons class="footer-buttons">
       <ion-button class="footer-button" fill="clear" (click)="History()">
-        <div class="button-content">
-          <ion-icon name="document-text-outline"></ion-icon>
-          <ion-label class="footer-label">My content</ion-label>
-        </div>
+        <div class="button-content"><ion-icon name="document-text-outline"></ion-icon><ion-label class="footer-label">My content</ion-label></div>
       </ion-button>
       <ion-button class="footer-button" fill="clear" (click)="isAuthenticated ? Homeuser() : Home()">
-        <div class="button-content">
-          <ion-icon name="home-outline"></ion-icon>
-          <ion-label class="footer-label">Home</ion-label>
-        </div>
+        <div class="button-content"><ion-icon name="home-outline"></ion-icon><ion-label class="footer-label">Home</ion-label></div>
       </ion-button>
       <ion-button class="footer-button" fill="clear" (click)="Contact()">
-        <div class="button-content">
-          <ion-icon name="help-circle-outline"></ion-icon>
-          <ion-label class="footer-label">Help</ion-label>
-        </div>
+        <div class="button-content"><ion-icon name="help-circle-outline"></ion-icon><ion-label class="footer-label">Help</ion-label></div>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-footer>
+<app-footer *ngIf="isNative"></app-footer>

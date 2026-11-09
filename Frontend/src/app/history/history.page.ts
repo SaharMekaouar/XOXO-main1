@@ -21,8 +21,11 @@ import {
   transition,
 } from '@angular/animations';
 import { Navbar } from "../navbar/navbar";
+import { Footer } from '../footer/footer';
 import { downloadTextAsPdf } from '../utils/pdf-download';
 import { getApiUrl } from '../core/api.config';
+import { Capacitor } from '@capacitor/core';
+import { copyTextToClipboard } from '../utils/mobile-file-actions';
 interface Clip {
   id: string;
   title: string;
@@ -38,7 +41,7 @@ interface Clip {
   imports: [
     CommonModule,
     FormsModule,
-    IonicModule, Navbar],
+    IonicModule, Navbar, Footer],
 
   templateUrl: './history.page.html',
   styleUrls: ['./history.page.scss'],
@@ -61,6 +64,7 @@ interface Clip {
 
 
 export class HistoryPage implements OnInit {
+  readonly isNative = Capacitor.isNativePlatform();
 
 filteredClips: any[] = [];
   loadingMessage: string = 'Loading...';
@@ -459,6 +463,22 @@ handleClick(event: MouseEvent) {
 
 
     filterClips() {
+      if (this.isNative) {
+        const search = this.searchTerm.trim().toLowerCase();
+        this.filteredClips = this.clips
+          .filter((clip) => {
+            const matchesSearch = !search ||
+              clip.title?.toLowerCase().includes(search) ||
+              clip.content?.toLowerCase().includes(search);
+            const matchesCategory = this.selectedCategory === null || clip.categoryId === this.selectedCategory;
+            const matchesFavorite = !this.showOnlyFavorites || clip.isFavorite === true;
+            const matchesPinned = !this.showOnlyPinned || clip.isPinned === true;
+            return matchesSearch && matchesCategory && matchesFavorite && matchesPinned;
+          })
+          .sort((a, b) => Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)));
+        return;
+      }
+
       this.filteredClips = this.clips.filter(clip => {
         const matchesSearch = !this.searchTerm ||
           clip.title?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
@@ -725,7 +745,8 @@ async deleteCategory(categoryId: string) {
 }
 filterByCategory(categoryId: string | null) {
   this.selectedCategory = categoryId;
-  this.applyFilters();
+  if (this.isNative) this.filterClips();
+  else this.applyFilters();
 }
 
 toggleFavoriteFilter() {
@@ -874,7 +895,17 @@ async showAlert(title: string, message: string) {
       {
         text: 'Copy',
         handler: () => {
-          navigator.clipboard.writeText(message);
+          if (!this.isNative) {
+            navigator.clipboard.writeText(message);
+            return;
+          }
+          return copyTextToClipboard(message).then(
+            () => this.ShowToast('Link copied to clipboard.'),
+            async (error) => {
+              console.error('Share link copy failed:', error);
+              await this.ShowToast('Could not copy the link.', 'danger');
+            },
+          );
         },
       },
       {
@@ -951,12 +982,18 @@ applyFilters() {
 resetFilters() {
   this.selectedCategory = null;
   this.showOnlyPinned = false;
-  this.applyFilters();
+  if (this.isNative) {
+    this.showOnlyFavorites = false;
+    this.filterClips();
+  } else {
+    this.applyFilters();
+  }
 }
 
 togglePinnedFilter() {
   this.showOnlyPinned = !this.showOnlyPinned;
-  this.applyFilters();
+  if (this.isNative) this.filterClips();
+  else this.applyFilters();
 }
 ionViewWillEnter() {
   this.loadSavedTexts();

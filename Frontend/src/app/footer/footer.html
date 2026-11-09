@@ -4,31 +4,34 @@
       
       <!-- Bouton History -->
       <ion-button 
-        class="footer-button" 
+        class="footer-button"
+        [class.active]="isNative && activeTab === 'history'"
         fill="clear"
         (click)="History()">
         <div class="button-content">
-          <ion-icon name="document-text-outline"></ion-icon>
-          <ion-label class="footer-label">History</ion-label>
+          <ion-icon name="document-text-outline" [class.footer-icon]="isNative"></ion-icon>
+          <ion-label class="footer-label">{{ isNative ? 'My content' : 'History' }}</ion-label>
         </div>
       </ion-button>
       <!-- Bouton Home -->
       <ion-button 
-        class="footer-button" 
+        class="footer-button"
+        [class.active]="isNative && activeTab === 'home'"
         fill="clear"
         (click)="Home()">
         <div class="button-content">
-          <ion-icon name="home-outline"></ion-icon>
+          <ion-icon name="home-outline" [class.footer-icon]="isNative"></ion-icon>
           <ion-label class="footer-label">Home</ion-label>
         </div>
       </ion-button>
       <!-- Bouton Help -->
       <ion-button
-        class="footer-button" 
+        class="footer-button"
+        [class.active]="isNative && activeTab === 'help'"
         fill="clear"
         (click)="Contact()">
         <div class="button-content">
-          <ion-icon name="help-circle-outline"></ion-icon>
+          <ion-icon name="help-circle-outline" [class.footer-icon]="isNative"></ion-icon>
           <ion-label class="footer-label">Help</ion-label>
         </div>
       </ion-button>

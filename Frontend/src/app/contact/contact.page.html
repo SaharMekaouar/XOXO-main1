@@ -36,28 +36,20 @@
   </footer>
 
   <!-- ✅ Mobile Footer (sticky using ion-footer) -->
-  <ion-footer class="mobile-only">
-  <ion-toolbar>
-    <ion-buttons class="footer-buttons">
-      <ion-button class="footer-button" fill="clear" (click)="History()">
-        <div class="button-content">
-          <ion-icon name="document-text-outline"></ion-icon>
-          <ion-label class="footer-label">My content</ion-label>
-        </div>
-      </ion-button>
-      <ion-button class="footer-button" fill="clear" (click)="isAuthenticated ? Homeuser() : Home()">
-        <div class="button-content">
-          <ion-icon name="home-outline"></ion-icon>
-          <ion-label class="footer-label">Home</ion-label>
-        </div>
-      </ion-button>
-      <ion-button class="footer-button" fill="clear" (click)="Contact()">
-        <div class="button-content">
-          <ion-icon name="help-circle-outline"></ion-icon>
-          <ion-label class="footer-label">Help</ion-label>
-        </div>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-footer>
+  <ion-footer class="mobile-only" *ngIf="!isNative">
+    <ion-toolbar>
+      <ion-buttons class="footer-buttons">
+        <ion-button class="footer-button" fill="clear" (click)="History()">
+          <div class="button-content"><ion-icon name="document-text-outline"></ion-icon><ion-label class="footer-label">My content</ion-label></div>
+        </ion-button>
+        <ion-button class="footer-button" fill="clear" (click)="isAuthenticated ? Homeuser() : Home()">
+          <div class="button-content"><ion-icon name="home-outline"></ion-icon><ion-label class="footer-label">Home</ion-label></div>
+        </ion-button>
+        <ion-button class="footer-button" fill="clear" (click)="Contact()">
+          <div class="button-content"><ion-icon name="help-circle-outline"></ion-icon><ion-label class="footer-label">Help</ion-label></div>
+        </ion-button>
+      </ion-buttons>
+    </ion-toolbar>
+  </ion-footer>
+  <app-footer *ngIf="isNative"></app-footer>
 </div>

@@ -152,6 +152,117 @@ img {
 }
 
 @media (max-width: 768px) {
+  .mobile-home-navbar {
+    display: block;
+  }
+
+  :host-context(body.native-app) {
+  .acceuil-page::part(scroll) {
+    padding: calc(76px + env(safe-area-inset-top, 0px)) 12px calc(92px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .hero {
+    padding: 24px 8px 18px;
+  }
+
+  .hero-text img {
+    width: min(280px, 82vw);
+    height: auto;
+  }
+
+  .hero-image img {
+    width: min(360px, 94vw);
+    height: auto;
+  }
+
+  .hero .auth-buttons {
+    display: none;
+  }
+
+  .native-home-cta {
+    display: grid;
+    gap: 8px;
+    width: min(420px, 100%);
+    margin: 14px auto 20px;
+  }
+
+  .native-home-cta button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 50px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 15px;
+    color: #fff;
+    background: linear-gradient(120deg, #7565df, #5d4dcc);
+    box-shadow: 0 10px 24px rgba(93, 77, 204, 0.24);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .native-home-cta button ion-icon {
+    font-size: 18px;
+  }
+
+  .native-home-cta span {
+    color: #717c94;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px 2px;
+  }
+
+  .features.second-row {
+    margin-top: 0;
+  }
+
+  .feature {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    max-width: none;
+    padding: 16px;
+    border: 1px solid rgba(106, 90, 205, 0.12);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 8px 22px rgba(45, 55, 104, 0.08);
+    text-align: left;
+  }
+
+  .feature .feature-icon {
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    margin: 0;
+  }
+
+  .feature-text h3 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+    color: #2c3e50;
+  }
+
+  .feature-text p {
+    margin: 0;
+    color: #5e6674;
+    font-size: 0.88rem;
+    line-height: 1.45;
+  }
+
+  .footer {
+    padding: 10px 0 4px;
+    font-size: 0.8rem;
+  }
+  }
+
   .auth-buttons {
     width: 100%;
     justify-content: center;
@@ -168,5 +279,20 @@ img {
 
   img {
     width: min(350px, 100%);
+  }
+}
+
+/* The public landing navigation exists on phones only; desktop web stays as-is. */
+.mobile-home-navbar {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobile-home-navbar {
+    display: block;
+  }
+
+  :host-context(body.native-app) .hero .auth-buttons {
+    display: none;
   }
 }

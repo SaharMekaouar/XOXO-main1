@@ -340,3 +340,63 @@ ion-icon {
   color:$primary-color;
   font-size: 24px;
 }
+
+/* Keep Help fixed to the viewport shell while its instructions scroll. */
+@media (max-width: 900px) {
+  :host-context(body.native-app) {
+  .container {
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  ion-content {
+    flex: 1 1 auto;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    --background: transparent !important;
+  }
+
+  ion-content::part(scroll) {
+    padding: calc(78px + env(safe-area-inset-top, 0px)) 14px calc(96px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .steps-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 14px;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 4px 0 18px;
+  }
+
+  .step-card {
+    width: 100%;
+    margin: 0;
+    padding: 22px 20px;
+    border: 1px solid rgba(106, 90, 205, 0.12);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  .step-card:hover {
+    transform: none;
+  }
+
+  .step-card h3 {
+    font-size: 19px;
+  }
+
+  .step-card p {
+    max-width: none;
+    margin: 0;
+    line-height: 1.55;
+  }
+  }
+}

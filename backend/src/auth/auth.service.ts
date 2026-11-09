@@ -71,11 +71,12 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
+    email = email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     // Toujours répondre la même chose, que l'email existe ou non
     const genericResponse = {
-      message: 'Si ce compte existe, un email de réinitialisation a été envoyé.',
+      message: 'If this account exists, a reset email has been sent.',
     };
 
     if (!user) {
@@ -90,7 +91,10 @@ export class AuthService {
       data: { resetToken, resetTokenExpiry },
     });
 
-    const resetLink = `http://localhost:8100/reset-password?email=${encodeURIComponent(email)}&token=${resetToken}`;
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:8100').replace(/\/$/, '');
+    // The app uses Angular's hash location strategy, so deep links must start
+    // after `/#/`; a plain `/reset-password` is treated as the home route.
+    const resetLink = `${frontendUrl}/#/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetToken)}`;
 
     await this.mailService.sendMail({
       to: email,
@@ -111,7 +115,7 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { password: hashedPassword, resetToken: null },
+      data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null },
     });
     return { message: 'Password reset successfully' };
   }

@@ -14,9 +14,12 @@ import { SavedTextService } from '../auth/services/saved-text.service';
 import { PopoverMenuComponent } from '../components/popover-menu.component/popover-menu.component';
 import { text } from 'ionicons/icons';
 import { Navbar } from "../navbar/navbar";
+import { Footer } from '../footer/footer';
 import { Filesystem, Directory,Encoding  } from '@capacitor/filesystem';
 import { getApiUrl } from '../core/api.config';
 import { downloadTextAsPdf } from '../utils/pdf-download';
+import { Capacitor } from '@capacitor/core';
+import { copyTextToClipboard } from '../utils/mobile-file-actions';
 @Component({
 
   selector: 'app-view',
@@ -25,12 +28,14 @@ import { downloadTextAsPdf } from '../utils/pdf-download';
     CommonModule,
     FormsModule,
     IonicModule,
-    Navbar
+    Navbar,
+    Footer
 ],
   templateUrl: './view.page.html',
   styleUrls: ['./view.page.scss'],
 })
 export class ViewPage implements OnInit {
+  readonly isNative = Capacitor.isNativePlatform();
   transcribedText: string = 'This is a sample transcribed text.';
   downloadMenuOpen = true;
   isEditing: boolean = false;
@@ -609,8 +614,19 @@ async copyText() {
   const textToCopy = this.translatedText || this.transcribedText;
 
   try {
-   
-    await navigator.clipboard.writeText(textToCopy);
+    if (this.isNative && (!navigator.clipboard || !window.isSecureContext)) {
+      const copyArea = document.createElement('textarea');
+      copyArea.value = textToCopy;
+      copyArea.style.position = 'fixed';
+      copyArea.style.opacity = '0';
+      document.body.appendChild(copyArea);
+      copyArea.select();
+      const copied = document.execCommand('copy');
+      copyArea.remove();
+      if (!copied) throw new Error('Clipboard copy failed');
+    } else {
+      await navigator.clipboard.writeText(textToCopy);
+    }
 
     // Show toast notification after successfully copying text
     const toast = await this.toastController.create({
@@ -836,7 +852,11 @@ async showAlert(title: string, message: string) {
       {
         text: 'Copy',
         handler: () => {
-          navigator.clipboard.writeText(message);
+          if (this.isNative) {
+            copyTextToClipboard(message).catch(error => console.error('Share link copy failed:', error));
+          } else {
+            navigator.clipboard.writeText(message);
+          }
         },
       },
       {

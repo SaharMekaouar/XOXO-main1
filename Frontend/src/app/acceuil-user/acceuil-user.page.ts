@@ -8,6 +8,7 @@ import { Navbar } from '../navbar/navbar';
 import { Footer } from '../footer/footer';
 import { AuthService } from '../auth/services/auth.service';
 import { getApiUrl } from '../core/api.config';
+import { Capacitor } from '@capacitor/core';
 
 type SpeechRecognitionConstructor = new () => any;
 
@@ -58,7 +59,7 @@ export class AcceuilUserPage implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.supportsLiveTranscription = this.getSpeechRecognitionConstructor() !== undefined;
+    this.supportsLiveTranscription = !Capacitor.isNativePlatform() && this.getSpeechRecognitionConstructor() !== undefined;
   }
 
   ngOnDestroy(): void {
@@ -83,6 +84,11 @@ export class AcceuilUserPage implements OnInit, OnDestroy {
 
   openYoutubeInput(): void {
     this.activeSource = 'youtube';
+    if (Capacitor.isNativePlatform()) {
+      window.setTimeout(() => {
+        document.getElementById('youtube-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 80);
+    }
   }
 
   onFileSelected(event: Event): void {
@@ -120,7 +126,10 @@ export class AcceuilUserPage implements OnInit, OnDestroy {
     }
 
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const audioConstraints: MediaStreamConstraints = Capacitor.isNativePlatform()
+        ? { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }
+        : { audio: true };
+      this.stream = await navigator.mediaDevices.getUserMedia(audioConstraints);
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
         : '';
@@ -140,7 +149,7 @@ export class AcceuilUserPage implements OnInit, OnDestroy {
       this.recorder.start(1000);
       this.isRecording = true;
       this.startTimer();
-      this.startLiveSpeechRecognition();
+      if (!Capacitor.isNativePlatform()) this.startLiveSpeechRecognition();
     } catch (error) {
       console.error('Microphone access failed:', error);
       this.errorMessage = 'Please allow microphone access, then try again.';
@@ -202,7 +211,7 @@ export class AcceuilUserPage implements OnInit, OnDestroy {
     // language.  In Auto mode Whisper receives the recording and detects the
     // spoken language from the audio itself.
     const instantText = `${this.liveTranscript} ${this.interimTranscript}`.trim();
-    if (instantText && this.selectedLanguage !== 'auto') {
+    if (!Capacitor.isNativePlatform() && instantText && this.selectedLanguage !== 'auto') {
       this.router.navigate(['/view'], { queryParams: { text: instantText } });
       return;
     }
@@ -254,7 +263,9 @@ export class AcceuilUserPage implements OnInit, OnDestroy {
   private handleConversionError(error: any): void {
     console.error('Transcription error:', error);
     this.isLoading = false;
-    this.errorMessage = error?.error?.message || 'We could not transcribe this source. Please try again.';
+    this.errorMessage = Capacitor.isNativePlatform() && error?.status === 0
+      ? `Cannot reach the AI server at ${getApiUrl()}. Connect the phone and computer to the same Wi-Fi and make sure the backend and AI server are running.`
+      : error?.error?.message || 'We could not transcribe this source. Please try again.';
   }
 
   private startTimer(): void {

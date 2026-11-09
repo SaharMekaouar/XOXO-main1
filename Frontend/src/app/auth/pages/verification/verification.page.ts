@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 import { NotificationService } from '../../../shared/notification.service';
 import { AuthService } from '../../services/auth.service';
+import { Capacitor } from '@capacitor/core';
 
 @Component({
   selector: 'app-verification',
@@ -41,16 +42,13 @@ export class VerificationPage implements OnInit {
   }
 
   sendEmailVerification() {
-    const loginChallenge = sessionStorage.getItem('loginChallenge');
+    const loginChallenge = Capacitor.isNativePlatform()
+      ? localStorage.getItem('loginChallenge')
+      : sessionStorage.getItem('loginChallenge');
     if (!this.email || !this.verificationEmail || !loginChallenge) {
       this.notification.error('Log in first, then enter the email that should receive your code.');
       return;
     }
-    if (this.email === this.verificationEmail.trim().toLowerCase()) {
-      this.notification.error('Use an email different from the login email.');
-      return;
-    }
-
     this.isLoading = true;
     this.authService.sendEmailVerification(this.email, this.verificationEmail, loginChallenge).subscribe({
       next: (response) => {
@@ -78,6 +76,7 @@ export class VerificationPage implements OnInit {
         this.isLoading = false;
         this.authService.completeVerification(response);
         sessionStorage.removeItem('loginChallenge');
+        localStorage.removeItem('loginChallenge');
         this.notification.success('Email verified successfully!');
         this.router.navigate(['/acceuil-user']);
       },

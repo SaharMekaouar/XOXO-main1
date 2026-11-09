@@ -23,14 +23,16 @@ export class ForgotPasswordPage {
   isSubmitting = false;
 
   requestReset() {
-    if (!this.email) {
-      alert('Veuillez entrer votre adresse e-mail.');
+    const email = this.email.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.message = 'Please enter a valid email address.';
       return;
     }
 
     this.isSubmitting = true;
+    this.message = '';
 
-    this.authService.forgotPassword(this.email).subscribe({
+    this.authService.forgotPassword(email).subscribe({
       next: (response: { message: string }) => {
         this.isSubmitting = false;
         this.message = response.message;
@@ -38,7 +40,7 @@ export class ForgotPasswordPage {
       error: (err) => {
         this.isSubmitting = false;
         console.error('Erreur de réinitialisation du mot de passe :', err);
-        this.message = "Une erreur est survenue. Veuillez réessayer.";
+        this.message = err?.error?.message || 'Could not send the reset email. Please try again.';
       }
     });
   }

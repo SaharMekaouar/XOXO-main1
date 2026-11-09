@@ -46,7 +46,7 @@
         <input #fileInput type="file" accept="audio/*,video/*,.webm" (change)="onFileSelected($event)" hidden>
       </div>
 
-      <section class="youtube-panel" *ngIf="activeSource === 'youtube'">
+      <section class="youtube-panel" id="youtube-panel" *ngIf="activeSource === 'youtube'">
         <div class="youtube-heading"><img src="assets/studio/youtube.svg" alt=""><div><strong>Paste your YouTube link</strong><span>We will extract the audio and create the transcript.</span></div></div>
         <div class="youtube-field"><input id="youtube-url" type="url" [(ngModel)]="mediaUrl" (ngModelChange)="clearFile()" placeholder="https://www.youtube.com/watch?v=..."><button type="button" (click)="convertToText()" [disabled]="!mediaUrl.trim() || isLoading">{{ isLoading ? 'Processing…' : 'Transcribe video' }}</button></div>
       </section>

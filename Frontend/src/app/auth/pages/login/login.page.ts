@@ -26,13 +26,12 @@ export class LoginPage implements AfterViewInit {
   rememberMe = false;
   isLoading = false;
   isNative = false;
-  navCtrl: any;
-
   constructor(
     private authService: AuthService,
     private router: Router,
     private notification: NotificationService,
     private googleSignIn: GoogleSignInService,
+    private navCtrl: NavController,
   ) {
     this.isNative = this.googleSignIn.isNative;
   }
@@ -65,8 +64,17 @@ export class LoginPage implements AfterViewInit {
     this.authService.login(this.email, this.password).subscribe({
       next: (response) => {
         this.isLoading = false;
-        sessionStorage.setItem('loginChallenge', response.loginChallenge);
-        this.router.navigate(['/verification'], { queryParams: { email: response.email, login: 'true' } });
+        // Capacitor WebView sessionStorage can be cleared during page transitions
+        // on some mobile devices. Keep the challenge available to verification.
+        const storage = this.isNative ? localStorage : sessionStorage;
+        storage.setItem('loginChallenge', response.loginChallenge);
+        if (this.isNative) {
+          this.navCtrl.navigateForward(['/verification'], {
+            queryParams: { email: response.email, login: 'true' },
+          });
+        } else {
+          this.router.navigate(['/verification'], { queryParams: { email: response.email, login: 'true' } });
+        }
       },
             error: (error) => {
         this.isLoading = false;

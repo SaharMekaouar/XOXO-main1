@@ -19,9 +19,6 @@ export class VerificationService {
   async sendEmailVerification(email: string, verificationEmail: string, loginChallenge: string) {
     email = email.trim().toLowerCase();
     verificationEmail = verificationEmail.trim().toLowerCase();
-    if (email === verificationEmail) {
-      throw new BadRequestException('Use a separate email address to receive the verification code.');
-    }
     const challenge = await this.jwtService.verifyAsync(loginChallenge).catch(() => null);
     if (challenge?.purpose !== 'email-login' || challenge.email !== email) {
       throw new BadRequestException('Login session expired. Please log in again.');

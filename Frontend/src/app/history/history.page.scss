@@ -456,6 +456,168 @@ ion-icon {
   font-size: 24px;
 }
 
+/* Phone layout: keep every history control inside one scrollable column. */
+@media (max-width: 900px) {
+  :host-context(body.native-app) {
+  .container {
+    display: block;
+    width: 100%;
+    min-height: 100dvh;
+  }
+
+  ion-content.history-page {
+    --background: #f4f5fb;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+  }
+
+  .history-page::part(scroll) {
+    padding: calc(78px + env(safe-area-inset-top, 0px)) 14px calc(92px + env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .history-mobile-heading {
+    margin: 0 0 16px;
+    padding: 4px 2px 0;
+  }
+
+  .history-mobile-heading p {
+    margin: 0 0 5px;
+    color: #6b5bd2;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+  }
+
+  .history-mobile-heading h1 {
+    margin: 0;
+    color: #202a45;
+    font-size: 25px;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .history-mobile-heading span {
+    display: block;
+    margin-top: 5px;
+    color: #77829a;
+    font-size: 12px;
+  }
+
+  .search-container {
+    width: 100%;
+    max-width: none;
+    margin: 0 0 14px;
+    padding-top: 0;
+  }
+
+  .categories-section {
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow-x: auto;
+    padding: 2px 0 12px;
+    gap: 8px;
+    scrollbar-width: thin;
+  }
+
+  .categories-section ion-chip {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .content-container,
+  .clips-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: none;
+    gap: 12px;
+    padding: 0;
+  }
+
+  .content-container {
+    margin: 0;
+  }
+
+  .clips-container ion-card {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid rgba(106, 90, 205, 0.12);
+    border-radius: 16px;
+  }
+
+  .clips-container ion-card:hover {
+    transform: none;
+  }
+
+  .clips-container ion-card-content {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .clips-container ion-card ion-footer {
+    position: static;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 7px;
+    padding: 10px 12px 12px;
+  }
+
+  .clips-container ion-card ion-footer > div {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    gap: 7px !important;
+  }
+
+  .clips-container ion-card ion-footer ion-button {
+    min-height: 40px;
+    justify-content: center;
+    --padding-start: 7px;
+    --padding-end: 7px;
+    --border-radius: 10px;
+    --background: #f3f1ff;
+    --color: #5547bc;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .clips-container ion-card ion-footer ion-button[color="danger"] {
+    --background: #fff0f1;
+    --color: #c53b4a;
+  }
+
+  .mobile-action-label {
+    display: inline;
+    margin-left: 4px;
+    color: inherit;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .categories-section {
+    margin: 0 0 12px;
+    padding: 0 0 10px;
+  }
+
+  .categories-section ion-chip {
+    min-height: 36px;
+    border: 1px solid rgba(106, 90, 205, 0.12);
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(45, 55, 104, 0.06);
+    font-size: 12px;
+  }
+
+  .categories-section ion-chip.selected {
+    --background: #6857d8;
+    --color: #fff;
+  }
+  }
+}
+
 ion-button {
   --padding-start: 8px;
   --padding-end: 8px;

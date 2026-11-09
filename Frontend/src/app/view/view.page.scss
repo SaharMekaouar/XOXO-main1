@@ -337,11 +337,57 @@ ion-toolbar {
   width: 100%;
 }
 
+  :host-context(body.native-app) ion-content::part(scroll) {
+    padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
+  }
+
   ion-card {
   background-color: #fff;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   margin-top: 70px;
 }
+
+  :host-context(body.native-app) .main-content {
+    padding: 72px 12px calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  :host-context(body.native-app) ion-card {
+    margin-top: 8px;
+  }
+
+  .mobile-result-actions {
+    display: flex;
+    gap: 10px;
+    padding: 0 16px 10px;
+  }
+
+  .mobile-result-actions .result-action {
+    flex: 1;
+    min-height: 42px;
+    margin: 0;
+    --border-radius: 11px;
+    font-size: 13px;
+  }
+
+  .mobile-result-actions .summarize-action {
+    --background: #6857d8;
+    --color: #fff;
+  }
+
+  .mobile-result-actions .copy-action {
+    --background: #f0edff;
+    --color: #5848bf;
+  }
+
+  :host-context(body.native-app) .text-zone {
+    line-height: 1.8;
+  }
+
+  :host-context(body.native-app) .text-zone ion-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    unicode-bidi: plaintext;
+  }
   
 }
